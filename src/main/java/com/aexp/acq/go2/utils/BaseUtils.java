@@ -3,6 +3,10 @@ package com.aexp.acq.go2.utils;
 import com.aexp.acq.go2.base.App;
 
 import java.io.InputStream;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 public class BaseUtils {
 
@@ -72,6 +76,65 @@ public class BaseUtils {
     catch (Exception e) {
       throw new RuntimeException("Error reading resource as string", e);
     }
+  }
+
+  /**
+   * Check if a branch is excluded
+   *
+   * @param string
+   * @return true if the branch is excluded
+   */
+  public static boolean isBranchExcluded(String string) {
+    String[] token = getEmptyWhenNull(App.instance().getProperty("github.excluded.branches")).split(",");
+    for (String s : token) {
+      if (s.trim().equals(string)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Get an empty string when the input is null
+   *
+   * @param string
+   * @return the input string or an empty string if the input is null
+   */
+  public static String getEmptyWhenNull(String string) {
+    return string == null ? "" : string;
+  }
+
+  /**
+   * Check if a branch is stale
+   *
+   * @param updatedAt
+   * @param threshold
+   * @return true if the branch is stale
+   */
+  public static boolean isStale(String updatedAt, String threshold, String inPattern) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(inPattern);
+    ZonedDateTime updatedDate = ZonedDateTime.parse(updatedAt, formatter);
+    ZonedDateTime now = ZonedDateTime.now();
+    long daysDifference = ChronoUnit.DAYS.between(updatedDate, now);
+    int thresholdDays = Integer.parseInt(threshold);
+    return daysDifference > thresholdDays;
+  }
+
+  /**
+   * Substitute tokens in a string
+   *
+   * @param input
+   * @param tokens
+   * @return the input string with tokens substituted
+   */
+  public static String stringSubstitutor(String input, Map<String, String> tokens) {
+    if (input != null && tokens != null) {
+      for (Map.Entry<String, String> entry : tokens.entrySet()) {
+        String pattern = "${" + entry.getKey() + "}";
+        input = input.replace(pattern, entry.getValue());
+      }
+    }
+    return input;
   }
 
 }

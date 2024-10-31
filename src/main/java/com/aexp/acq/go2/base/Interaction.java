@@ -11,8 +11,8 @@ import java.util.Map;
 public abstract class Interaction extends BaseComponent {
 
   private static final OkHttpClient client = new OkHttpClient();
-  private static final String token = App.instance().getProperty("GITHUB_TOKEN"); // System.getenv("");
-  private static final String githubApiVersion = App.instance().getProperty("GITHUB_API_VERSION"); // System.getenv("");
+  private static final String token = App.instance().getProperty("github.token"); // System.getenv("");
+  private static final String githubApiVersion = App.instance().getProperty("github.api.version"); // System.getenv("");
   private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
   public Interaction(String name) {
@@ -37,9 +37,16 @@ public abstract class Interaction extends BaseComponent {
     return requestBuilder;
   }
 
-  private RestResponse handleResponse(Response response) {
+  private RestResponse handleResponse(Response response) throws IOException {
+    Object ret = null;
     RestResponse restResponse = new RestResponse();
-    restResponse.setMessage(response.message());
+    if (response.code() == 204 && response.body() == null) {
+      ret = "";
+    }
+    else {
+      ret = response.body().string();
+    }
+    restResponse.setMessage((String)ret);
     restResponse.setStatus(response.code());
     restResponse.setTime(response.receivedResponseAtMillis() - response.sentRequestAtMillis());
     return restResponse;
