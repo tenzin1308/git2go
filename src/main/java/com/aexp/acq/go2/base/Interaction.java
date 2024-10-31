@@ -11,8 +11,8 @@ import java.util.Map;
 public abstract class Interaction {
 
   private static final OkHttpClient client = new OkHttpClient();
-  private static final String token = System.getenv("");
-  private static final String githubApiVersion = System.getenv(""); // "application/vnd.github.v3+json"
+  private static final String token = App.instance().getProperty("GITHUB_TOKEN"); // System.getenv("");
+  private static final String githubApiVersion = App.instance().getProperty("GITHUB_API_VERSION"); // System.getenv("");
   private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
   public Interaction() {

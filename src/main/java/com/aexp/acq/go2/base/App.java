@@ -19,7 +19,7 @@ public class App {
 
   public static void init(String appName) {
     instance.appName = appName;
-    logger.info("App initialized with appName: " + appName);
+    logger.info("App initialized with appName: " + instance.appName);
   }
 
   public void loadProperties(String resourcePath) {
@@ -32,7 +32,7 @@ public class App {
       throw new RuntimeException("Error loading properties", e);
     }
 
-
+    properties.putAll(System.getenv());
   }
 
   public String getProperty(String key) {
