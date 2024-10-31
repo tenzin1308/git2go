@@ -6,7 +6,7 @@ public class RestResponse {
   public String errorCode;
   public Integer status;
   public long time;
- 
+
   public String getMessage() {
     return message;
   }
