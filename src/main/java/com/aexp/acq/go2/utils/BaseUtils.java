@@ -1,5 +1,9 @@
 package com.aexp.acq.go2.utils;
 
+import com.aexp.acq.go2.base.App;
+
+import java.io.InputStream;
+
 public class BaseUtils {
 
   /**
@@ -50,6 +54,24 @@ public class BaseUtils {
    */
   public static String getCanonicalName(String className) {
     return className;
+  }
+
+  /**
+   * Get the resource as a string
+   *
+   * @param clazz
+   * @param filePath
+   * @return the resource as a string
+   */
+  public static String getResourceAsString(Class<App> clazz, String filePath) {
+    try (InputStream inputStream = clazz.getClassLoader().getResourceAsStream(filePath)) {
+      byte[] bytes = new byte[inputStream.available()];
+      inputStream.read(bytes);
+      return new String(bytes);
+    }
+    catch (Exception e) {
+      throw new RuntimeException("Error reading resource as string", e);
+    }
   }
 
 }
