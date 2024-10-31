@@ -8,14 +8,15 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class Interaction {
+public abstract class Interaction extends BaseComponent {
 
   private static final OkHttpClient client = new OkHttpClient();
   private static final String token = App.instance().getProperty("GITHUB_TOKEN"); // System.getenv("");
   private static final String githubApiVersion = App.instance().getProperty("GITHUB_API_VERSION"); // System.getenv("");
   private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
-  public Interaction() {
+  public Interaction(String name) {
+    super(name);
     if (token == null || BaseUtils.isNullOrEmpty(token)) {
       throw new IllegalStateException("GitHub Token not provided");
     }

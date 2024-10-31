@@ -9,12 +9,11 @@ public class GetBranchesEndPoint extends Interaction {
 
   private static final Logger logger = LoggerFactory.getLogger(GetBranchesEndPoint.class);
 
-  public GetBranchesEndPoint() {
-    super();
+  public GetBranchesEndPoint(String name) {
+    super(name);
   }
 
-  protected Object execute(Object... vargs) {
-    logger.info("Executing -> {}", BaseUtils.getSimpleClassName(GetBranchesEndPoint.class));
+  protected Object process(Object... vargs) {
     String url = (String)vargs[0];
     String protectedBranches = (String)vargs[1];
     String currentPage = (String)vargs[2];

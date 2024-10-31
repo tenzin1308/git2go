@@ -15,11 +15,41 @@ public class BaseUtils {
   /**
    * Get the simple class name of a class
    *
+   * @param className
+   * @return the simple class name
+   */
+  public static String getSimpleClassName(String className) {
+    return className.substring(className.lastIndexOf('.') + 1);
+  }
+
+  /**
+   * Get the simple class name of a class
+   *
    * @param clazz
    * @return the simple class name
    */
   public static String getSimpleClassName(Class<?> clazz) {
     return clazz.getSimpleName();
+  }
+
+  /**
+   * Get the canonical name of a class
+   *
+   * @param clazz
+   * @return the canonical name
+   */
+  public static String getCanonicalName(Class<?> clazz) {
+    return clazz.getCanonicalName();
+  }
+
+  /**
+   * Get the canonical name of a class
+   *
+   * @param className
+   * @return the canonical name
+   */
+  public static String getCanonicalName(String className) {
+    return className;
   }
 
 }
