@@ -4,6 +4,7 @@ import com.aexp.acq.go2.utils.BaseUtils;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,69 +36,99 @@ public abstract class Interaction {
     return requestBuilder;
   }
 
-  protected final Object get(String url) throws IOException {
+  private RestResponse handleResponse(Response response) {
+    RestResponse restResponse = new RestResponse();
+    restResponse.setMessage(response.message());
+    restResponse.setStatus(response.code());
+    restResponse.setTime(response.receivedResponseAtMillis() - response.sentRequestAtMillis());
+    return restResponse;
+  }
+
+  private RestResponse handleException(IOException e, long then) {
+    RestResponse restResponse = new RestResponse();
+    restResponse.setStatus(500);
+    restResponse.setErrorCode("IOException");
+    restResponse.setMessage(e.getMessage());
+    restResponse.setTime(Instant.now().toEpochMilli() - then);
+    return restResponse;
+  }
+
+  protected final Object get(String url) {
     Map<String, String> header = new HashMap<>();
     return get(url, header);
   }
-  
-  protected final Object get(String url, Map<String, String> headers) throws IOException {
+
+  protected final Object get(String url, Map<String, String> headers) {
+    RestResponse restResponse;
     Request request = createRequest(url, headers).get().build();
+    long then = Instant.now().toEpochMilli();
+
     try (Response response = client.newCall(request).execute()) {
-      if (response.isSuccessful() && response.body() != null) {
-        return response.body().string();
-      }
+      restResponse = handleResponse(response);
     }
-    // TODO: Handle the error response
-    return null;
+    catch (IOException e) {
+      restResponse = handleException(e, then);
+    }
+    return restResponse;
   }
 
-  protected final Object post(String url, String body) throws IOException {
+  protected final Object post(String url, String body) {
     Map<String, String> header = new HashMap<>();
     return post(url, header, JSON, body);
   }
 
-  protected final Object post(String url, Map<String, String> headers, MediaType reqMediaType, String body) throws IOException {
+  protected final Object post(String url, Map<String, String> headers, MediaType reqMediaType, String body) {
+    RestResponse restResponse;
     RequestBody requestBody = RequestBody.create(body, reqMediaType);
     Request request = createRequest(url, headers).post(requestBody).build();
+    long then = Instant.now().toEpochMilli();
 
     try (Response response = client.newCall(request).execute()) {
-      if (response.isSuccessful() && response.body() != null) {
-        return response.body().string();
-      }
+      restResponse = handleResponse(response);
     }
-    return null;
+    catch (IOException e) {
+      restResponse = handleException(e, then);
+    }
+    return restResponse;
   }
 
-  protected final Object put(String url, String body) throws IOException {
+  protected final Object put(String url, String body) {
     Map<String, String> header = new HashMap<>();
     return put(url, header, JSON, body);
   }
 
-  protected final Object put(String url, Map<String, String> headers, MediaType reqMediaType, String body) throws IOException {
+  protected final Object put(String url, Map<String, String> headers, MediaType reqMediaType, String body) {
+    RestResponse restResponse;
     RequestBody requestBody = RequestBody.create(body, reqMediaType);
     Request request = createRequest(url, headers).put(requestBody).build();
+    long then = Instant.now().toEpochMilli();
 
     try (Response response = client.newCall(request).execute()) {
-      if (response.isSuccessful() && response.body() != null) {
-        return response.body().string();
-      }
+      restResponse = handleResponse(response);
     }
-    return null;
+    catch (IOException e) {
+      restResponse = handleException(e, then);
+    }
+    return restResponse;
   }
 
-  protected final Object delete(String url) throws IOException {
+  protected final Object delete(String url) {
     Map<String, String> header = new HashMap<>();
     return delete(url, header);
   }
 
-  protected final Object delete(String url, Map<String, String> headers) throws IOException {
+  protected final Object delete(String url, Map<String, String> headers) {
+    RestResponse restResponse;
     Request request = createRequest(url, headers).delete().build();
+    long then = Instant.now().toEpochMilli();
+
     try (Response response = client.newCall(request).execute()) {
-      if (response.isSuccessful() && response.body() != null) {
-        return response.body().string();
-      }
+      restResponse = handleResponse(response);
     }
-    return null;
+    catch (IOException e) {
+      restResponse = handleException(e, then);
+    }
+    return restResponse;
   }
 
 }
