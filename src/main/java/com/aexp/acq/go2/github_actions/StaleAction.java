@@ -3,6 +3,7 @@ package com.aexp.acq.go2.github_actions;
 import com.aexp.acq.go2.base.App;
 import com.aexp.acq.go2.base.BaseComponent;
 import com.aexp.acq.go2.base.RestResponse;
+import com.aexp.acq.go2.rest_interactions.DeleteReferenceEndPoint;
 import com.aexp.acq.go2.rest_interactions.GetBranchEndPoint;
 import com.aexp.acq.go2.rest_interactions.ListBranchesEndPoint;
 import com.aexp.acq.go2.utils.BaseUtils;
@@ -17,6 +18,7 @@ public class StaleAction extends BaseComponent {
   String url = App.instance().getProperty("github.base.url");
   String gitRepo = App.instance().getProperty("github.repo");
   Document branches = new JDocument();
+  Document actionResponse = new JDocument("stale_actions_response", null);
 
   public StaleAction(String name) {
     super(name);
@@ -27,16 +29,28 @@ public class StaleAction extends BaseComponent {
     listBranches();
     for (int i = 0; i < branches.getArraySize("$.list_branches[]"); i++) {
       try {
-        if (BaseUtils.isBranchExcluded(branches.getString("$.list_branches[%].name", String.valueOf(i)))) {
-          logger.info("Branch is excluded -> {}", branches.getString("$.list_branches[%].name", String.valueOf(i)));
+        String branchName = branches.getString("$.list_branches[%].name", String.valueOf(i));
+        if (BaseUtils.isBranchExcluded(branchName)) {
+          logger.info("Branch is excluded -> {}", branchName);
           continue;
         }
-        String response = invokeGetBranchEndPoint(url, gitRepo, branches.getString("$.list_branches[%].name", String.valueOf(i)));
+        String response = invokeGetBranchEndPoint(url, gitRepo, branchName);
         Document responseDoc = new JDocument(response);
         String updatedAt = responseDoc.getString("$.commit.commit.committer.date"); // "uuuu-MM-dd'T'HH:mm:ss'X'"
         if (BaseUtils.isStale(updatedAt, App.instance().getProperty("days.before.stale.branch"), "uuuu-MM-dd'T'HH:mm:ssX")) {
-          logger.info("Branch is stale -> {}", branches.getString("$.list_branches[%].name", String.valueOf(i)));
-
+          logger.info("Stale Branch -> {}, last updated at -> {}", branchName, updatedAt);
+          actionResponse.setString("$.stale_actions_response.stale_branch[branch_name=%].branch_name", branchName, branchName);
+          actionResponse.setString("$.stale_actions_response.stale_branch[branch_name=%].branch_updated_at", updatedAt, branchName);
+          RestResponse restResponse = invokeDeleteReferenceEndPoint(url, gitRepo, branchName);
+          if (restResponse.getStatus() == 204) {
+            logger.info("Branch deleted successfully -> {}", branchName);
+            actionResponse.setBoolean("$.stale_actions_response.stale_branch[branch_name=%].is_purge", true, branchName);
+          }
+          else {
+            logger.error("Error while deleting branch -> {}", branchName);
+            actionResponse.setBoolean("$.stale_actions_response.stale_branch[branch_name=%].is_purge", false, branchName);
+            actionResponse.setString("$.stale_actions_response.stale_branch[branch_name=%].error_message", restResponse.getMessage(), branchName);
+          }
         }
       }
       catch (Exception e) {
@@ -44,7 +58,7 @@ public class StaleAction extends BaseComponent {
       }
 
     }
-    return null;
+    return actionResponse.getPrettyPrintJson();
   }
 
   private Document listBranches() {
@@ -76,6 +90,11 @@ public class StaleAction extends BaseComponent {
     GetBranchEndPoint getBranchEndPoint = new GetBranchEndPoint("com.aexp.acq.go2.rest_interactions.GetBranchEndPoint");
     RestResponse restResponse = (RestResponse)getBranchEndPoint.execute(url, gitRepo, branch);
     return restResponse.getResponseBody();
+  }
+
+  private RestResponse invokeDeleteReferenceEndPoint(String url, String gitRepo, String branch) {
+    DeleteReferenceEndPoint deleteReferenceEndPoint = new DeleteReferenceEndPoint("com.aexp.acq.go2.rest_interactions.DeleteReferenceEndPoint");
+    return (RestResponse)deleteReferenceEndPoint.execute(url, gitRepo, branch);
   }
 
 }

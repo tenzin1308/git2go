@@ -1,0 +1,13 @@
+{
+  "stale_actions_response": {
+    "stale_branch": [
+      {
+        "jdocs_arr_pk": "{\"field\":\"branch_name\"}",
+        "branch_name": "{\"type\":\"string\"}",
+        "is_purge": "{\"type\":\"boolean\"}",
+        "branch_updated_at": "{\"type\":\"string\"}",
+        "error_message": "{\"type\":\"string\"}"
+      }
+    ]
+  }
+}
