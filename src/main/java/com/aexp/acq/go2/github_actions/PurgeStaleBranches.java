@@ -37,7 +37,7 @@ public class PurgeStaleBranches extends BaseComponent {
         String response = invokeGetBranchEndPoint(url, gitRepo, branchName);
         Document responseDoc = new JDocument(response);
         String updatedAt = responseDoc.getString("$.commit.commit.committer.date"); // "uuuu-MM-dd'T'HH:mm:ss'X'"
-        if (BaseUtils.isStale(updatedAt, App.instance().getProperty("days.before.stale.branch"), "uuuu-MM-dd'T'HH:mm:ssX")) {
+        if (BaseUtils.isNotNullOrEmpty(updatedAt) && BaseUtils.isStale(updatedAt, App.instance().getProperty("days.before.stale.branch"), "uuuu-MM-dd'T'HH:mm:ssX")) {
           logger.info("Stale Branch -> {}, last updated at -> {}", branchName, updatedAt);
           actionResponse.setString("$.stale_actions_response.stale_branch[branch_name=%].branch_name", branchName, branchName);
           actionResponse.setString("$.stale_actions_response.stale_branch[branch_name=%].branch_updated_at", updatedAt, branchName);

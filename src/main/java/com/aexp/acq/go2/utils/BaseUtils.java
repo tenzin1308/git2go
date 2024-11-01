@@ -21,6 +21,16 @@ public class BaseUtils {
   }
 
   /**
+   * Check if a string is not (null and empty)
+   *
+   * @param str
+   * @return true if the string is not (null and empty)
+   */
+  public static boolean isNotNullOrEmpty(String str) {
+    return str != null && str.trim().isEmpty() == false;
+  }
+
+  /**
    * Get the simple class name of a class
    *
    * @param className
