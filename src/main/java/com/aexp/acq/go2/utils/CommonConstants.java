@@ -12,7 +12,7 @@ public class CommonConstants {
     static {
       actions = new HashMap<>();
       // Add actions here
-      actions.put("StaleAction", "com.aexp.acq.go2.github_actions.StaleAction");
+      actions.put("PurgeStaleBranches", "com.aexp.acq.go2.github_actions.PurgeStaleBranches");
     }
 
     public static String getAction(String action) {

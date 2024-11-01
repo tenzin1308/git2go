@@ -12,15 +12,15 @@ import com.americanexpress.unify.jdocs.JDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StaleAction extends BaseComponent {
+public class PurgeStaleBranches extends BaseComponent {
 
-  private static final Logger logger = LoggerFactory.getLogger(StaleAction.class);
+  private static final Logger logger = LoggerFactory.getLogger(PurgeStaleBranches.class);
   String url = App.instance().getProperty("github.base.url");
   String gitRepo = App.instance().getProperty("github.repo");
   Document branches = new JDocument();
   Document actionResponse = new JDocument("stale_actions_response", null);
 
-  public StaleAction(String name) {
+  public PurgeStaleBranches(String name) {
     super(name);
   }
 
@@ -29,7 +29,7 @@ public class StaleAction extends BaseComponent {
     listBranches();
     for (int i = 0; i < branches.getArraySize("$.list_branches[]"); i++) {
       try {
-        String branchName = branches.getString("$.list_branches[%].name", String.valueOf(i));
+        String branchName = BaseUtils.getEmptyWhenNull(branches.getString("$.list_branches[%].name", String.valueOf(i)));
         if (BaseUtils.isBranchExcluded(branchName)) {
           logger.info("Branch is excluded -> {}", branchName);
           continue;

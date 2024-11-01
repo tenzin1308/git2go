@@ -22,7 +22,7 @@ public class Git2Go {
     }
 
     // execute the action
-    Object response = executeActions("StaleAction");
+    Object response = executeActions("PurgeStaleBranches");
     System.out.println("Hello and welcome!");
 
     // return the response and graceful shutdown
