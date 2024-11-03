@@ -9,11 +9,11 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CreateIssueComment extends Interaction {
+public class CreateIssueCommentEndPoint extends Interaction {
 
-  private static final Logger logger = LoggerFactory.getLogger(CreateIssueComment.class);
+  private static final Logger logger = LoggerFactory.getLogger(CreateIssueCommentEndPoint.class);
 
-  public CreateIssueComment(String name) {
+  public CreateIssueCommentEndPoint(String name) {
     super(name);
   }
 

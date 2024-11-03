@@ -4,7 +4,7 @@ import com.aexp.acq.go2.base.App;
 import com.aexp.acq.go2.base.BaseComponent;
 import com.aexp.acq.go2.base.RestResponse;
 import com.aexp.acq.go2.rest_interactions.AddLabelsEndPoint;
-import com.aexp.acq.go2.rest_interactions.CreateIssueComment;
+import com.aexp.acq.go2.rest_interactions.CreateIssueCommentEndPoint;
 import com.aexp.acq.go2.rest_interactions.ListPullRequestEndPoint;
 import com.aexp.acq.go2.rest_interactions.UpdatePullRequestEndPoint;
 import com.aexp.acq.go2.utils.BaseUtils;
@@ -119,8 +119,8 @@ public class PurgeStalePRs extends BaseComponent {
   }
 
   private String invokeCreateIssueCommentEndPoint(String url, String gitRepo, String prNumber, String payload) {
-    CreateIssueComment createIssueComment = new CreateIssueComment("com.aexp.acq.go2.rest_interactions.CreateIssueComment");
-    RestResponse restResponse = (RestResponse)createIssueComment.execute(url, gitRepo, prNumber, payload);
+    CreateIssueCommentEndPoint createIssueCommentEndPoint = new CreateIssueCommentEndPoint("com.aexp.acq.go2.rest_interactions.CreateIssueCommentEndPoint");
+    RestResponse restResponse = (RestResponse)createIssueCommentEndPoint.execute(url, gitRepo, prNumber, payload);
     return restResponse.getResponseBody();
   }
 
