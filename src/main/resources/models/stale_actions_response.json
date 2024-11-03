@@ -20,6 +20,8 @@
         "error_message": "{\"type\":\"string\"}"
       }
     ],
-    ]
+    "maven_cli": {
+      "build_status": "{\"type\":\"boolean\"}"
+    }
   }
 }
