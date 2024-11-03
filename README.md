@@ -17,6 +17,10 @@ the lines where violations occur.
 - `config_file` (optional): URL or path to a custom Checkstyle configuration file (default: Google Checkstyle).
 - `commit_sha`: The commit SHA to analyze (inferred from the PR).
 
+[//]: # (Link to another readme file for checkstyle action)
+
+[Checkstyle Action](docs/checkstyle/README.md)
+
 ### 2. Maven CLI Action
 
 The Maven CLI Action allows you to run Maven commands directly from your workflow. It supports various Maven goals.
