@@ -13,6 +13,7 @@ public class Git2Go {
     {
       App.init(Git2Go.class.getSimpleName());
       App.instance().loadProperties("config.properties");
+      App.instance().loadEnvironmentProperties();
       App.loadDocumentModels("doc_models", "models/");
     }
 
