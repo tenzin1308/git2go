@@ -1,6 +1,8 @@
 package com.aexp.acq.go2.utils;
 
 import com.aexp.acq.go2.base.App;
+import com.americanexpress.unify.jdocs.Document;
+import com.americanexpress.unify.jdocs.JDocument;
 
 import java.io.InputStream;
 import java.time.ZonedDateTime;
@@ -145,6 +147,30 @@ public class BaseUtils {
       }
     }
     return input;
+  }
+
+  /**
+   * Get a resource as a document
+   *
+   * @param clazz
+   * @param filePath
+   * @return the resource as a document
+   */
+  public static Document getResouceAsDocument(Class clazz, String filePath) {
+    return getResouceAsDocument(clazz, filePath, null);
+  }
+
+  public static Document getResouceAsDocument(Class clazz, String filePath, String docType) {
+    String content = getResourceAsString(clazz, filePath);
+    if (content != null) {
+      if (docType != null) {
+        return new JDocument(docType, content);
+      }
+      else {
+        return new JDocument(content);
+      }
+    }
+    return null;
   }
 
 }

@@ -1,0 +1,15 @@
+{
+  "assign_reviewers_config": [
+    {
+      "branch": "{\"type\":\"string\"}",
+      "request_reviewers": {
+        "reviewers": [
+          "{\"type\":\"string\"}"
+        ],
+        "team_reviewers": [
+          "{\"type\":\"string\"}"
+        ]
+      }
+    }
+  ]
+}
