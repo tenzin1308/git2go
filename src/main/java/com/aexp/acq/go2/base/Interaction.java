@@ -139,4 +139,24 @@ public abstract class Interaction extends BaseComponent {
     return restResponse;
   }
 
+  protected final Object patch(String url, String body) {
+    Map<String, String> header = new HashMap<>();
+    return patch(url, header, JSON, body);
+  }
+
+  protected final Object patch(String url, Map<String, String> headers, MediaType reqMediaType, String body) {
+    RestResponse restResponse;
+    RequestBody requestBody = RequestBody.create(body, reqMediaType);
+    Request request = createRequest(url, headers).patch(requestBody).build();
+    long then = Instant.now().toEpochMilli();
+
+    try (Response response = client.newCall(request).execute()) {
+      restResponse = handleResponse(response);
+    }
+    catch (IOException e) {
+      restResponse = handleException(e, then);
+    }
+    return restResponse;
+  }
+
 }

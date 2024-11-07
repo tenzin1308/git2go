@@ -21,6 +21,16 @@ public class BaseUtils {
   }
 
   /**
+   * Check if a string is not (null and empty)
+   *
+   * @param str
+   * @return true if the string is not (null and empty)
+   */
+  public static boolean isNotNullOrEmpty(String str) {
+    return str != null && str.trim().isEmpty() == false;
+  }
+
+  /**
    * Get the simple class name of a class
    *
    * @param className
@@ -85,7 +95,7 @@ public class BaseUtils {
    * @return true if the branch is excluded
    */
   public static boolean isBranchExcluded(String string) {
-    String[] token = getEmptyWhenNull(App.instance().getProperty("github.excluded.branches")).split(",");
+    String[] token = getEmptyWhenNull(App.instance().getProperty("excluded.branches")).split(",");
     for (String s : token) {
       if (s.trim().equals(string)) {
         return true;

@@ -56,6 +56,17 @@ public class App {
     properties.putAll(System.getenv());
   }
 
+  public void loadEnvironmentProperties() {
+    logger.info("Loading Env Properties");
+    for (String key : properties.stringPropertyNames()) {
+      String envKey = String.format("INPUT_%s", key.replace(".", "_").toUpperCase());
+      String envValue = System.getenv(envKey);
+      if (envValue != null) {
+        properties.setProperty(key, envValue);
+      }
+    }
+  }
+
   public String getProperty(String key) {
     return properties.getProperty(key);
   }

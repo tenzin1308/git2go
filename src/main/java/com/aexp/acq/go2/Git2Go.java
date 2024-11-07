@@ -13,6 +13,7 @@ public class Git2Go {
     {
       App.init(Git2Go.class.getSimpleName());
       App.instance().loadProperties("config.properties");
+      App.instance().loadEnvironmentProperties();
       App.loadDocumentModels("doc_models", "models/");
     }
 
@@ -22,7 +23,7 @@ public class Git2Go {
     }
 
     // execute the action
-    Object response = executeActions("StaleAction");
+    Object response = executeActions("PurgeStaleBranches");
     System.out.println("Hello and welcome!");
 
     // return the response and graceful shutdown
