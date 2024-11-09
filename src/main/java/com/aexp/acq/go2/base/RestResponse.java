@@ -1,5 +1,6 @@
 package com.aexp.acq.go2.base;
 
+@Deprecated(since = "2.0.0", forRemoval = true)
 public class RestResponse {
 
   public String message;

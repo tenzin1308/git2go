@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated(since = "2.0.0", forRemoval = true)
 public abstract class Interaction extends BaseComponent {
 
   private static final OkHttpClient client = new OkHttpClient();
