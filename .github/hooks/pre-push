@@ -1,0 +1,13 @@
+#!/bin/sh
+
+ # Run Maven build (or any checks you want before pushing)
+ mvn clean verify
+
+ # Check if the Maven build was successful
+ if [ $? -ne 0 ]; then
+     echo "Maven build failed. Push aborted."
+     exit 1
+ fi
+
+ echo "Maven build succeeded. Proceeding with push."
+ exit 0
