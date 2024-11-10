@@ -1,7 +1,8 @@
 #!/bin/bash
 
 branch_name=$(git symbolic-ref --short HEAD)
-if [[ "$branch_name" != "${branch_name,,}" ]]; then
+lowercase_branch_name=$(echo "$branch_name" | tr '[:upper:]' '[:lower:]')
+if [[ "$branch_name" != "$lowercase_branch_name" ]]; then
     echo "Branch name must be lowercase. Aborting commit."
     exit 1
 fi

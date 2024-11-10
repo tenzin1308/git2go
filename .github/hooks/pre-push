@@ -1,7 +1,7 @@
 #!/bin/sh
 
  # Run Maven build (or any checks you want before pushing)
- mvn clean verify
+ mvn clean install
 
  # Check if the Maven build was successful
  if [ $? -ne 0 ]; then
