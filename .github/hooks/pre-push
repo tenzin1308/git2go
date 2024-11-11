@@ -13,5 +13,5 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo -e "${GREEN}Maven build succeeded. Proceeding with push."
+echo -e "${GREEN}Maven build succeeded. Proceeding with push.${NC}"
 exit 0
