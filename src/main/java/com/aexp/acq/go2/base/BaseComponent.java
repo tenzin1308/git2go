@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 
 abstract public class BaseComponent {
 
+  protected static final String owner = App.instance().getProperty("github.graphql.owner");
+  protected static final String repo = App.instance().getProperty("github.graphql.repo");
   private static Logger logger = LoggerFactory.getLogger(BaseComponent.class);
   private String name = null;
   private String className = null;
@@ -31,5 +33,6 @@ abstract public class BaseComponent {
   }
 
   abstract protected Object process(Object... vargs);
+
 
 }

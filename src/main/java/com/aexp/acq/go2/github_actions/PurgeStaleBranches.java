@@ -1,11 +1,6 @@
 package com.aexp.acq.go2.github_actions;
 
-import com.aexp.acq.go2.base.App;
-import com.aexp.acq.go2.base.BaseComponent;
-import com.aexp.acq.go2.base.RestResponse;
-import com.aexp.acq.go2.rest_interactions.DeleteReferenceEndPoint;
-import com.aexp.acq.go2.rest_interactions.GetBranchEndPoint;
-import com.aexp.acq.go2.rest_interactions.ListBranchesEndPoint;
+import com.aexp.acq.go2.base.*;
 import com.aexp.acq.go2.utils.BaseUtils;
 import com.americanexpress.unify.jdocs.Document;
 import com.americanexpress.unify.jdocs.JDocument;
@@ -81,20 +76,20 @@ public class PurgeStaleBranches extends BaseComponent {
   }
 
   private String invokeListBranchesEndPoint(String url, String gitRepo, String currentPage) {
-    ListBranchesEndPoint listBranchesEndPoint = new ListBranchesEndPoint("com.aexp.acq.go2.rest_interactions.ListBranchesEndPoint");
-    RestResponse restResponse = (RestResponse)listBranchesEndPoint.execute(url, gitRepo, currentPage);
+    RestInteraction restInteraction = (RestInteraction)Git2GoComponentFactory.instance().getComponent("com.aexp.acq.go2.rest_interactions.ListBranchesEndPoint");
+    RestResponse restResponse = (RestResponse)restInteraction.execute(url, gitRepo, currentPage);
     return restResponse.getResponseBody();
   }
 
   private String invokeGetBranchEndPoint(String url, String gitRepo, String branch) {
-    GetBranchEndPoint getBranchEndPoint = new GetBranchEndPoint("com.aexp.acq.go2.rest_interactions.GetBranchEndPoint");
-    RestResponse restResponse = (RestResponse)getBranchEndPoint.execute(url, gitRepo, branch);
+    RestInteraction restInteraction = (RestInteraction)Git2GoComponentFactory.instance().getComponent("com.aexp.acq.go2.rest_interactions.GetBranchEndPoint");
+    RestResponse restResponse = (RestResponse)restInteraction.execute(url, gitRepo, branch);
     return restResponse.getResponseBody();
   }
 
   private RestResponse invokeDeleteReferenceEndPoint(String url, String gitRepo, String branch) {
-    DeleteReferenceEndPoint deleteReferenceEndPoint = new DeleteReferenceEndPoint("com.aexp.acq.go2.rest_interactions.DeleteReferenceEndPoint");
-    return (RestResponse)deleteReferenceEndPoint.execute(url, gitRepo, branch);
+    RestInteraction restInteraction = (RestInteraction)Git2GoComponentFactory.instance().getComponent("com.aexp.acq.go2.rest_interactions.DeleteReferenceEndPoint");
+    return (RestResponse)restInteraction.execute(url, gitRepo, branch);
   }
 
 }

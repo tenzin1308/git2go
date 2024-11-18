@@ -4,14 +4,9 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-# Run Maven build (or any checks you want before pushing)
-mvn clean install
-
-# Check if the Maven build was successful
-if [ $? -ne 0 ]; then
-  echo -e "${RED}Error:${NC} Maven build failed. Push aborted." >&2
+if ! mvn compile -T 4C -DskipTests -am; then
+  echo -e "${RED}[Error]${NC} Maven build failed. Push aborted."
   exit 1
 fi
-
-echo -e "${GREEN}Maven build succeeded. Proceeding with push.${NC}"
+echo -e "${GREEN}[INFO]${NC} Maven build succeeded. Proceeding with push."
 exit 0

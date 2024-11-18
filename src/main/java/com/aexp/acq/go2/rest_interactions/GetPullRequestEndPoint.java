@@ -1,7 +1,7 @@
 package com.aexp.acq.go2.rest_interactions;
 
 import com.aexp.acq.go2.base.App;
-import com.aexp.acq.go2.base.Interaction;
+import com.aexp.acq.go2.base.RestInteraction;
 import com.aexp.acq.go2.utils.BaseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,8 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-@Deprecated(since = "2.0.0", forRemoval = true)
-public class GetPullRequestEndPoint extends Interaction {
+public class GetPullRequestEndPoint extends RestInteraction {
 
   private static final Logger logger = LoggerFactory.getLogger(ListPullRequestEndPoint.class);
 
