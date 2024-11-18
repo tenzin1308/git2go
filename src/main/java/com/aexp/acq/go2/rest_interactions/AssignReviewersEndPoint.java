@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated(since = "2.0.0", forRemoval = true)
 public class AssignReviewersEndPoint extends Interaction {
 
   private static final Logger logger = LoggerFactory.getLogger(AssignReviewersEndPoint.class);
