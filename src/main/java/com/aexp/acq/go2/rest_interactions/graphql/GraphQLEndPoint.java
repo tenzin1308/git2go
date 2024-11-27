@@ -14,8 +14,6 @@ public class GraphQLEndPoint extends GraphInteraction {
   private static final Logger logger = LoggerFactory.getLogger(GraphQLEndPoint.class);
   private static final MediaType JSON = MediaType.get("application/json");
   private static final String target = App.instance().getProperty("github.graphql.base.url");
-  private static final String owner = App.instance().getProperty("github.graphql.owner");
-  private static final String repo = App.instance().getProperty("github.graphql.repo");
 
   public GraphQLEndPoint(String name) {
     super(name);
