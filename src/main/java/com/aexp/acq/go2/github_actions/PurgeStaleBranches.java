@@ -2,11 +2,14 @@ package com.aexp.acq.go2.github_actions;
 
 import com.aexp.acq.go2.base.*;
 import com.aexp.acq.go2.utils.BaseUtils;
+import com.aexp.acq.go2.utils.Status;
 import com.americanexpress.unify.jdocs.Document;
 import com.americanexpress.unify.jdocs.JDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Status(value = "TESTING_IN_PROGRESS",
+        description = "This component is under testing")
 public class PurgeStaleBranches extends BaseComponent {
 
   private static final Logger logger = LoggerFactory.getLogger(PurgeStaleBranches.class);

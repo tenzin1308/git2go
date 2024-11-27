@@ -1,10 +1,6 @@
 package com.aexp.acq.go2.github_actions;
 
-import com.aexp.acq.go2.base.App;
-import com.aexp.acq.go2.base.BaseComponent;
-import com.aexp.acq.go2.base.RestResponse;
-import com.aexp.acq.go2.rest_interactions.CreatePullRequestReviewCommentEndPoint;
-import com.aexp.acq.go2.rest_interactions.ListPullRequestFilesEndPoint;
+import com.aexp.acq.go2.base.*;
 import com.americanexpress.unify.jdocs.Document;
 import com.americanexpress.unify.jdocs.JDocument;
 import com.puppycrawl.tools.checkstyle.Checker;
@@ -104,8 +100,8 @@ public class CheckStyle extends BaseComponent {
   }
 
   private void invokeListPullRequestFilesEndPoint() {
-    ListPullRequestFilesEndPoint listPullRequestFilesEndPoint = new ListPullRequestFilesEndPoint("com.aexp.acq.go2.rest_interactions.ListPullRequestFilesEndPoint");
-    RestResponse restResponse = (RestResponse)listPullRequestFilesEndPoint.execute(App.instance().getProperty("github.base.url"),
+    RestInteraction restInteraction = (RestInteraction)Git2GoComponentFactory.instance().getComponent("com.aexp.acq.go2.rest_interactions.ListPullRequestFilesEndPoint");
+    RestResponse restResponse = (RestResponse)restInteraction.execute(App.instance().getProperty("github.base.url"),
             App.instance().getProperty("github.repo"),
             App.instance().getProperty("checkstyle.pull.request.number"));
     // Parse the response
@@ -119,8 +115,8 @@ public class CheckStyle extends BaseComponent {
   }
 
   private void invokeCreatePullRequestReviewCommentEndPoint(String fileName, String commitSHA, int line, String errorMessage) {
-    CreatePullRequestReviewCommentEndPoint createPullRequestReviewCommentEndPoint = new CreatePullRequestReviewCommentEndPoint("com.aexp.acq.go2.rest_interactions.CreatePullRequestReviewCommentEndPoint");
-    createPullRequestReviewCommentEndPoint.execute(App.instance().getProperty("github.base.url"),
+    RestInteraction restInteraction = (RestInteraction)Git2GoComponentFactory.instance().getComponent("com.aexp.acq.go2.rest_interactions.CreatePullRequestReviewCommentEndPoint");
+    restInteraction.execute(App.instance().getProperty("github.base.url"),
             App.instance().getProperty("github.repo"),
             App.instance().getProperty("checkstyle.pull.request.number"),
             "{\"body\":\"" + errorMessage + "\",\"commit_id\":\"" + commitSHA + "\",\"path\":\"" + fileName + "\",\"line\":" + line + ", \"side\":\"RIGHT\"}");

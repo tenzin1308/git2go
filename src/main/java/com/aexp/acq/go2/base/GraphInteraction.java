@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
 
-public abstract class GraphInteraction extends BaseComponent {
+public abstract class GraphInteraction extends Interaction {
 
   private static final OkHttpClient client = new OkHttpClient();
   private static final MediaType JSON = MediaType.get("application/json");

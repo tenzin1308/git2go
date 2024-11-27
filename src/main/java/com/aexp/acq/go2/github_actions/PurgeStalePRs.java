@@ -1,12 +1,6 @@
 package com.aexp.acq.go2.github_actions;
 
-import com.aexp.acq.go2.base.App;
-import com.aexp.acq.go2.base.BaseComponent;
-import com.aexp.acq.go2.base.RestResponse;
-import com.aexp.acq.go2.rest_interactions.AddLabelsEndPoint;
-import com.aexp.acq.go2.rest_interactions.CreateIssueCommentEndPoint;
-import com.aexp.acq.go2.rest_interactions.ListPullRequestEndPoint;
-import com.aexp.acq.go2.rest_interactions.UpdatePullRequestEndPoint;
+import com.aexp.acq.go2.base.*;
 import com.aexp.acq.go2.utils.BaseUtils;
 import com.americanexpress.unify.jdocs.Document;
 import com.americanexpress.unify.jdocs.JDocument;
@@ -107,26 +101,26 @@ public class PurgeStalePRs extends BaseComponent {
   }
 
   private String invokeListPullRequestEndPoint(String url, String gitRepo, String page) {
-    ListPullRequestEndPoint listPullRequestEndPoint = new ListPullRequestEndPoint("com.aexp.acq.go2.rest_interactions.ListPullRequestEndPoint");
-    RestResponse restResponse = (RestResponse)listPullRequestEndPoint.execute(url, gitRepo, page);
+    RestInteraction restInteraction = (RestInteraction)Git2GoComponentFactory.instance().getComponent("com.aexp.acq.go2.rest_interactions.ListPullRequestEndPoint");
+    RestResponse restResponse = (RestResponse)restInteraction.execute(url, gitRepo, page);
     return restResponse.getResponseBody();
   }
 
   private String invokeUpdatePullRequestEndPoint(String url, String gitRepo, String prNumber, String payload) {
-    UpdatePullRequestEndPoint updatePullRequestEndPoint = new UpdatePullRequestEndPoint("com.aexp.acq.go2.rest_interactions.UpdatePullRequestEndPoint");
-    RestResponse restResponse = (RestResponse)updatePullRequestEndPoint.execute(url, gitRepo, prNumber, payload);
+    RestInteraction restInteraction = (RestInteraction)Git2GoComponentFactory.instance().getComponent("com.aexp.acq.go2.rest_interactions.UpdatePullRequestEndPoint");
+    RestResponse restResponse = (RestResponse)restInteraction.execute(url, gitRepo, prNumber, payload);
     return restResponse.getResponseBody();
   }
 
   private String invokeCreateIssueCommentEndPoint(String url, String gitRepo, String prNumber, String payload) {
-    CreateIssueCommentEndPoint createIssueCommentEndPoint = new CreateIssueCommentEndPoint("com.aexp.acq.go2.rest_interactions.CreateIssueCommentEndPoint");
-    RestResponse restResponse = (RestResponse)createIssueCommentEndPoint.execute(url, gitRepo, prNumber, payload);
+    RestInteraction restInteraction = (RestInteraction)Git2GoComponentFactory.instance().getComponent("com.aexp.acq.go2.rest_interactions.CreateIssueCommentEndPoint");
+    RestResponse restResponse = (RestResponse)restInteraction.execute(url, gitRepo, prNumber, payload);
     return restResponse.getResponseBody();
   }
 
   private String invokeAddLabelsEndPoint(String url, String gitRepo, String prNumber, String payload) {
-    AddLabelsEndPoint addLabelsEndPoint = new AddLabelsEndPoint("com.aexp.acq.go2.rest_interactions.AddLabelsEndPoint");
-    RestResponse restResponse = (RestResponse)addLabelsEndPoint.execute(url, gitRepo, prNumber, payload);
+    RestInteraction restInteraction = (RestInteraction)Git2GoComponentFactory.instance().getComponent("com.aexp.acq.go2.rest_interactions.AddLabelsEndPoint");
+    RestResponse restResponse = (RestResponse)restInteraction.execute(url, gitRepo, prNumber, payload);
     return restResponse.getResponseBody();
   }
 
