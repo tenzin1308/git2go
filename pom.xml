@@ -78,9 +78,24 @@
 
     <repositories>
         <repository>
-            <id>m-all</id>
-            <url>https://artifactory.aexp.com/prod/</url>
+            <id>corporate</id>
+            <url>https://artifactory.aexp.com/corporate</url>
+        </repository>
+        <repository>
+            <id>central</id>
+            <url>https://artifactory.aexp.com/iq-maven-central-proxy/</url>
         </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>corporate</id>
+            <url>https://artifactory.aexp.com/corporate</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>central</id>
+            <url>https://artifactory.aexp.com/iq-maven-central-proxy/</url>
+        </pluginRepository>
+    </pluginRepositories>
 
 </project>

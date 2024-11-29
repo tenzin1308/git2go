@@ -3,9 +3,8 @@ FROM maven:3.8.5-openjdk-17 AS builder
 # Set the working directory
 WORKDIR /app
 
-# Copy the pom.xml and settings.xml to the container
+# Copy the pom.xml to the container
 COPY pom.xml .
-COPY settings.xml /root/.m2/settings.xml
 
 # Copy the source code to the container
 COPY src/ /app/src/

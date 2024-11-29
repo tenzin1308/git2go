@@ -6,6 +6,15 @@
             <password>${env.GITHUB_TOKEN}</password>
         </server>
     </servers>
+
+    <mirrors>
+        <mirror>
+            <mirrorOf>*</mirrorOf>
+            <url>https://artifactory.aexp.com/prod/</url>
+            <id>m-all</id>
+        </mirror>
+    </mirrors>
+
     <profiles>
         <profile>
             <id>profile-m-all</id>
@@ -23,6 +32,7 @@
             </repositories>
         </profile>
     </profiles>
+    
     <activeProfiles>
         <activeProfile>profile-m-all</activeProfile>
     </activeProfiles>
