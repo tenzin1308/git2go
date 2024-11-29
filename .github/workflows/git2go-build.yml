@@ -22,11 +22,18 @@ jobs:
         run: echo "commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: amex-eng/setup-java@v4.2.2
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
           cache: 'maven'
+
+      - name: Setup Maven
+        uses: amex-eng/setup-maven@ae4bb8b0c9f98e490c38e1c17d9e63c9acab5705
+        with:
+          maven-version: 3.9.6
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
 
       - name: Build with Maven
         run: mvn -B package --file pom.xml
