@@ -36,7 +36,7 @@ jobs:
       - name: Delete existing same Release
         run: |
           RELEASE_ID=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -s  https://github.aexp.com/api/v3/repos/${{ github.repository }}/releases/tags/v${{ env.version }} | jq -r '.[0].id')
+            -s  https://github.aexp.com/api/v3/repos/${{ github.repository }}/releases/tags/v${{ env.version }} | jq -r '.id')
           
           if [ "$RELEASE_ID" != "null" ]; then
             curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
