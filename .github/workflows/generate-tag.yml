@@ -1,0 +1,21 @@
+name: Generate Tag from pom.xml
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Extract Version from pom.xml
+        id: get_version
+        run: echo "version=$(xpath -q -e '/project/version/text()' pom.xml)" >> $GITHUB_ENV
+
+      - name: Create Git Tag
+        run: git tag -a "v${{ env.version }}" -m "Release v${{ env.version }}" && git push origin "v${{ env.version }}"
