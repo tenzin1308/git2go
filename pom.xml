@@ -76,13 +76,6 @@
         </plugins>
     </build>
 
-    <distributionManagement>
-        <repository>
-            <id>corporate</id>
-            <url>https://artifactory.aexp.com/java-hosted/content/repositories/corporate</url>
-        </repository>
-    </distributionManagement>
-
     <repositories>
         <repository>
             <id>prod</id>
