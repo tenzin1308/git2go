@@ -15,7 +15,7 @@ jobs:
 
       - name: Extract Version from pom.xml
         id: get_version
-        run: echo "version=$(xpath -q -e '/project/version/text()' pom.xml)" >> $GITHUB_ENV
+        run: echo "version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
 
       - name: Create Git Tag
         run: git tag -a "v${{ env.version }}" -m "Release v${{ env.version }}" && git push origin "v${{ env.version }}"
