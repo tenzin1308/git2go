@@ -78,7 +78,7 @@
 
     <repositories>
         <repository>
-            <id>prod</id>
+            <id>m-all</id>
             <url>https://artifactory.aexp.com/prod/</url>
         </repository>
     </repositories>
