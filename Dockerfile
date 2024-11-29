@@ -2,7 +2,7 @@
 FROM maven:3.8.5-openjdk-17 AS builder
 WORKDIR /app
 COPY . .
-RUN mvn package -DskipTests -Dmaven.repo.remote=https://artifactory.aexp.com/prod/
+RUN mvn package -DskipTests
 
 # Stage 2: Build the runtime image
 FROM openjdk:17-jdk-slim
