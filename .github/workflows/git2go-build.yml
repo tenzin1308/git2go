@@ -16,8 +16,6 @@ jobs:
     permissions:
       packages: write
       contents: read
-      attestations: write
-      id-token: write
 
     steps:
       - name: Checkout Repo
