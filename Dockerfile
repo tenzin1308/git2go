@@ -1,5 +1,5 @@
 # Stage 1: Build the JAR file
-FROM maven:3.9.5-openjdk-17 AS builder
+FROM maven:3.8.5-openjdk-17 AS builder
 WORKDIR /app
 COPY . .
 RUN mvn package -DskipTests -Dmaven.repo.remote=https://artifactory.aexp.com/prod/
