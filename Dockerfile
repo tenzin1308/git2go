@@ -9,6 +9,9 @@ COPY pom.xml .
 # Copy the source code to the container
 COPY src/ /app/src/
 
+# Copy the .github to the container
+COPY .github/ /app/.github/
+
 # Build the project using Maven (package only to avoid tests)
 RUN mvn clean package -DskipTests
 
