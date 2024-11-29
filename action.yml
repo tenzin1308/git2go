@@ -1,0 +1,11 @@
+name: "Git2Go"
+description: "An Umbrella GitHub Action providing multiple functionalities."
+inputs:
+  action_name:
+    description: "The name of the action to be invoked."
+    required: true
+
+
+runs:
+  using: 'docker'
+  image: 'ghcr.io/${{ github.repository }}/git2go:${{ github.ref_name }}'

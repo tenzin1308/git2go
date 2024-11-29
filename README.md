@@ -77,7 +77,8 @@ jobs:
         uses: actions/checkout@v2
       
       - name: Run Checkstyle
-        uses: ttash/git2go@v1
+        uses: amex-eng/git2go@v1.0.0 # Refer to the desired version
         with:
+          action_name: 'checkstyle'
           config_file: 'https://example.com/checkstyle.xml'
           commit_sha: ${{ github.sha }}
