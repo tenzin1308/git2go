@@ -1,4 +1,4 @@
-name: Generate Tag and Release
+name: Generate Tag and Release, And Build and Push Docker Image
 
 on:
   push:
@@ -50,3 +50,23 @@ jobs:
           curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -d '{"tag_name": "v${{ env.version }}", "target_commitish": "${{ env.commit }}", "name": "Release v${{ env.version }}", "body": "Release notes", "draft": false, "prerelease": false}' \
             https://github.aexp.com/api/v3/repos/${{ github.repository }}/releases
+
+
+  build_and_push_docer_image:
+    runs-on: aexp-ubuntu-latest-medium
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          version=${GITHUB_REF##*/}
+          docker build -t ghcr.io/${{ github.repository }}/git2go:$version .
+          docker push ghcr.io/${{ github.repository }}/git2go:$version
