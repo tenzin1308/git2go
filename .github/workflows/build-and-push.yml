@@ -6,6 +6,9 @@ on:
       - "Generate Tag and Release"
     types:
       - completed
+  release:
+    types:
+      - created
 
 jobs:
   build:
