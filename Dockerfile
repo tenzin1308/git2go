@@ -1,8 +1,17 @@
 # Stage 1: Build the JAR file
 FROM maven:3.8.5-openjdk-17 AS builder
+# Set the working directory
 WORKDIR /app
-COPY . .
-RUN mvn package -DskipTests
+
+# Copy the pom.xml and settings.xml to the container
+COPY pom.xml .
+COPY settings.xml /root/.m2/settings.xml
+
+# Copy the source code to the container
+COPY src/ /app/src/
+
+# Build the project using Maven (package only to avoid tests)
+RUN mvn clean package -DskipTests
 
 # Stage 2: Build the runtime image
 FROM openjdk:17-jdk-slim
