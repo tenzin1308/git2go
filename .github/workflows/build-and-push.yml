@@ -1,9 +1,11 @@
 name: Build and Push Docker Image
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_run:
+    workflows:
+      - "Generate Tag from pom.xml"
+    types:
+      - completed
 
 jobs:
   build:
