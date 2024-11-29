@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: aexp-ubuntu-latest-medium
 
     steps:
       - name: Checkout Repo
