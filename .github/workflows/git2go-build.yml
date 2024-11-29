@@ -2,55 +2,12 @@ name: Generate Tag and Release, And Build and Push Docker Image
 
 on:
   push:
+    tags:
+      - v*
     branches:
       - develop
 
 jobs:
-  create_tag_and_release:
-    runs-on: aexp-ubuntu-latest-medium
-
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-
-      - name: Extract Version from pom.xml
-        id: get_version
-        run: echo "version=$(grep -m1 '<version>' pom.xml | sed -E 's/.*<version>(.*)<\/version>.*/\1/')" >> $GITHUB_ENV
-
-      - name: Get the latest commit SHA
-        id: commit
-        run: echo "commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
-      - name: Delete existing same Tag
-        run: |
-          curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          https://github.aexp.com/api/v3/repos/${{ github.repository }}/git/refs/tags/v${{ env.version }} ||
-          echo "Tag v${{ env.version }} does not exist. Proceeding to create a new tag."
-
-      - name: Create Git Tag
-        run: |
-          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -d '{"tag": "v${{ env.version }}", "message": "Release v${{ env.version }}", "object": "${{ env.commit }}", "type": "commit"}' \
-            https://github.aexp.com/api/v3/repos/${{ github.repository }}/git/tags
-
-      - name: Delete existing same Release
-        run: |
-          RELEASE_ID=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -s  https://github.aexp.com/api/v3/repos/${{ github.repository }}/releases/tags/v${{ env.version }} | jq -r '.id')
-          
-          if [ "$RELEASE_ID" != "null" ]; then
-            curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              https://github.aexp.com/api/v3/repos/${{ github.repository }}/releases/$RELEASE_ID
-          else
-            echo "Release does not exist, creating a new release."
-          fi
-
-      - name: Create Release
-        run: |
-          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -d '{"tag_name": "v${{ env.version }}", "target_commitish": "${{ env.commit }}", "name": "Release v${{ env.version }}", "body": "Release notes", "draft": false, "prerelease": false}' \
-            https://github.aexp.com/api/v3/repos/${{ github.repository }}/releases
-
   build_and_push_docker_image:
     runs-on: aexp-ubuntu-latest-medium
 
