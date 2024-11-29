@@ -88,11 +88,4 @@
         </plugins>
     </build>
 
-    <repositories>
-        <repository>
-            <id>prod</id>
-            <url>https://artifactory.aexp.com/prod/</url>
-        </repository>
-    </repositories>
-
 </project>
