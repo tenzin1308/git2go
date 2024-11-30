@@ -8,4 +8,9 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'ghcr.io/${{ github.repository }}/git2go:${{ github.ref_name }}'
+  image: 'Dockerfile'
+  args: |
+    --build-arg JAR_FILE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+    "https://github.aexp.com/api/v3/repos/${{ github.repository }}/releases/tags/${GITHUB_REF##*/}" | \
+    jq -r '.assets[0].name')
+    
