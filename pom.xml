@@ -29,12 +29,12 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.16</version>
+            <version>1.7.30</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.24.1</version>
+            <version>2.17.1</version>
         </dependency>
         <dependency>
             <groupId>com.puppycrawl.tools</groupId>
@@ -84,17 +84,22 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <!-- Set createDependencyReducedPom to false for Uber JAR -->
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <!-- Filters to exclude unwanted files from dependencies -->
                             <filters>
                                 <filter>
-                                    <artifact>*:*</artifact>
+                                    <artifact>*:*</artifact> <!-- Apply to all dependencies -->
                                     <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/*.SF</exclude> <!-- Exclude signature files -->
+                                        <exclude>META-INF/*.DSA</exclude> <!-- Exclude DSA files -->
+                                        <exclude>META-INF/*.RSA</exclude> <!-- Exclude RSA files -->
                                     </excludes>
                                 </filter>
                             </filters>
+                            <!-- Transformers to merge and modify files -->
                             <transformers>
+                                <!-- Merge MANIFEST.MF for defining the entry point of the JAR -->
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.aexp.acq.go2.Git2Go</mainClass>
