@@ -1,5 +1,5 @@
 ## Stage 1: Use a base image with JDK support
-FROM openjdk:17-jdk-slim AS builder
+FROM azul/zulu-openjdk:17-jdk
 
 # Set the working directory
 WORKDIR /app
