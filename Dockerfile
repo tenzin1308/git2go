@@ -1,5 +1,5 @@
 ## Stage 1: Use a base image with JDK support
-FROM azul/zulu-openjdk:17-jdk-alpine
+FROM artifactory.aexp.com/dockerproxy/openjdk:17-jdk
 
 # Set the working directory
 WORKDIR /app
