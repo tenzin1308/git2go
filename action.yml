@@ -20,6 +20,18 @@ runs:
         echo "GITHUB_ACTION_REF: $GITHUB_ACTION_REF"
         echo "GITHUB_REF: $GITHUB_REF"
       shell: bash
+    - name: "Check if GITHUB_ACTION_REPOSITORY and GITHUB_ACTION_REF are not null or empty"
+      run: |
+        if [ -z "$GITHUB_ACTION_REPOSITORY" ] ; then
+          echo "GITHUB_ACTION_REPOSITORY is null or empty."
+          exit 1
+        fi
+        if [ -z "$GITHUB_ACTION_REF" ]; then
+          echo " GITHUB_ACTION_REF is null or empty."
+          exit 1
+        fi
+        echo "GITHUB_ACTION_REPOSITORY and GITHUB_ACTION_REF are not null or empty."
+      shell: bash
     #  using: 'docker'
     #  image: 'Dockerfile'
     #  args: |
