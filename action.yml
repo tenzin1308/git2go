@@ -10,11 +10,6 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   env:
-    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GH_TOKEN: ${{ github.token }}
     GH_ACTION_REPOSITORY: ${{ github.action_repository}}
     GH_ACTION_REF: ${{ github.action_ref }}
-    #  args: |
-    #    --build-arg JAR_FILE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-    #    "https://github.aexp.com/api/v3/repos/${{ github.action_repository }}/releases/tags/${{ github.action_ref }}") && \
-    #    ASSET_URL=$(echo $jq -r '.assets[0].name')
-    
