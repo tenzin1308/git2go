@@ -1,11 +1,11 @@
 ## Stage 1: Use a base image with JDK support
-FROM azul/zulu-openjdk:17-jdk
+FROM azul/zulu-openjdk:17-jdk-alpine
 
 # Set the working directory
 WORKDIR /app
 
 # Install required tools
-RUN apt-get update && apt-get install -y jq curl
+RUN apk update && apk add --no-cache curl jq
 
 ## Define build-time arguments for GitHub token and repository information
 #ARG GH_TOKEN
