@@ -9,8 +9,8 @@ inputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
-  env:
-    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    GH_ACTION_REPOSITORY: ${{ github.action_repository}}
-    GH_ACTION_REF: ${{ github.action_ref }}
+#  env:
+#    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#    GH_ACTION_REPOSITORY: ${{ github.action_repository}}
+#    GH_ACTION_REF: ${{ github.action_ref }}
 
