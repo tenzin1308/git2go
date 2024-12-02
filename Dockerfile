@@ -5,7 +5,7 @@ FROM artifactory.aexp.com/dockerproxy/openjdk:17-jdk
 WORKDIR /app
 
 # Install required tools
-RUN apk update && apk add --no-cache curl jq
+RUN apt-get update && apt-get install -y curl jq
 
 ## Define build-time arguments for GitHub token and repository information
 #ARG GH_TOKEN
