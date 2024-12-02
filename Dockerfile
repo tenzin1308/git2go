@@ -7,10 +7,10 @@ WORKDIR /app
 # Install required tools
 RUN apt-get update && apt-get install -y jq curl
 
-# Define build-time arguments for GitHub token and repository information
-ARG GH_TOKEN
-ARG GH_ACTION_REPOSITORY
-ARG GH_ACTION_REF
+## Define build-time arguments for GitHub token and repository information
+#ARG GH_TOKEN
+#ARG GH_ACTION_REPOSITORY
+#ARG GH_ACTION_REF
 
 # Fetch the release asset dynamically during Docker build
 RUN RELEASE_JSON=$(curl -s -H "Authorization: token $GH_TOKEN" \
