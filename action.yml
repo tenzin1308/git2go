@@ -18,6 +18,7 @@ runs:
         echo "GITHUB_ACTION_REPOSITORY: $GITHUB_ACTION_REPOSITORY"
         echo "GITHUB_ACTION_REF: $GITHUB_ACTION_REF"
         echo "GITHUB_REF: $GITHUB_REF"
+      shell: bash
     #  using: 'docker'
     #  image: 'Dockerfile'
     #  args: |
