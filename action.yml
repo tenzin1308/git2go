@@ -8,6 +8,16 @@ inputs:
 
 runs:
   using: 'docker'
+  steps:
+    - run: |
+        echo "Running the action: ${{ inputs.action_name }}"
+        echo "GH_TOKEN: $GH_TOKEN"
+        echo "GH_ACTION_REPOSITORY: $GH_ACTION_REPOSITORY"
+        echo "GH_ACTION_REF: $GH_ACTION_REF"
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_ACTION_REPOSITORY: ${{ github.action_repository}}
+        GH_ACTION_REF: ${{ github.action_ref }}
   image: 'Dockerfile'
 #  env:
 #    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
