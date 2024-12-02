@@ -1,11 +1,14 @@
 ## Stage 1: Use a base image with JDK support
-FROM artifactory.aexp.com/dockerproxy/openjdk:17-jdk
+FROM artifactory.aexp.com/dockerproxy/azul/zulu-openjdk@sha256:6d01d86257747b869eb1fbc8ff723b912c76277d9ac3a266640250d626233647
 
 # Set the working directory
 WORKDIR /app
 
 # Install required tools
-RUN apt-get update && apt-get install -y curl jq
+RUN \
+    apt-get update -o Acquire::https::artifactory.aexp.com::Verify-Peer=false && \
+    apt-get install -y -o Acquire::https::artifactory.aexp.com::Verify-Peer=false ca-certificates curl jq && \
+    apt-get clean
 
 ## Define build-time arguments for GitHub token and repository information
 #ARG GH_TOKEN
