@@ -7,10 +7,21 @@ inputs:
 
 
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
-  args: |
-    --build-arg JAR_FILE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-    "https://github.aexp.com/api/v3/repos/${{ github.repository }}/releases/tags/${GITHUB_REF##*/}" | \
-    jq -r '.assets[0].name')
+  using: "composite"
+  steps:
+    - name: "Print all the GITHUB environment variables"
+      run: "env | grep GITHUB"
+    - name: "Print specific GITHUB environment variables"
+      run: |
+        echo "GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
+        echo "GITHUB_REPOSITORY_OWNER: $GITHUB_REPOSITORY_OWNER"
+        echo "GITHUB_ACTION_REPOSITORY: $GITHUB_ACTION_REPOSITORY"
+        echo "GITHUB_ACTION_REF: $GITHUB_ACTION_REF"
+        echo "GITHUB_REF: $GITHUB_REF"
+    #  using: 'docker'
+    #  image: 'Dockerfile'
+    #  args: |
+    #    --build-arg JAR_FILE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+    #    "https://github.aexp.com/api/v3/repos/${{ github.repository }}/releases/tags/${GITHUB_REF##*/}" | \
+    #    jq -r '.assets[0].name')
     
