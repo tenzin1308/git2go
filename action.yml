@@ -8,6 +8,10 @@ inputs:
 
 runs:
   using: "composite"
+  env:
+    GH_TOKEN: ${{ github.token }}
+    GH_ACTION_REPOSITORY: ${{ github.action_repository}}
+    GH_ACTION_REF: ${{ github.action_ref }}
   steps:
     - name: Fetch the release asset dynamically
       id: fetch-release-asset
@@ -21,17 +25,9 @@ runs:
         curl -L -H "Authorization: token $GH_TOKEN" -o /tmp/git2go.jar "$RELEASE_ASSET_URL"
         echo "JAR file downloaded: /tmp/git2go.jar"
       shell: bash
-      env:
-        GH_TOKEN: ${{ github.token }}
-        GH_ACTION_REPOSITORY: ${{ github.action_repository}}
-        GH_ACTION_REF: ${{ github.action_ref }}
 
     - name: Run the action
       id: run-action
       run: |
         java -jar /tmp/git2go.jar ${{ inputs.action_name }}
       shell: bash
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GH_ACTION_REPOSITORY: ${{ github.action_repository}}
-        GH_ACTION_REF: ${{ github.action_ref }}
