@@ -25,16 +25,6 @@ runs:
         GH_TOKEN: ${{ github.token }}
         GH_ACTION_REPOSITORY: ${{ github.action_repository}}
         GH_ACTION_REF: ${{ github.action_ref }}
-    - name: Validate Java installation
-      id: validate-java
-      run: |
-        java -version
-      shell: bash
-    - name: Validate Maven installation
-      id: validate-maven
-      run: |
-        mvn -version
-      shell: bash
     - name: Run the action
       id: run-action
       run: |
