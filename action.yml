@@ -10,7 +10,7 @@ runs:
   using: 'docker'
   image: Dockerfile
   args: |
-    bash -c '
+    bash -c |
       # Fetch the release asset dynamically
       RELEASE_JSON=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           "https://github.aexp.com/api/v3/repos/${{ github.action_repository }}/releases/tags/${{ github.action_ref }}")
@@ -20,8 +20,7 @@ runs:
       curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -o /tmp/git2go.jar "$RELEASE_ASSET_URL"
     
       # Pass the downloaded JAR file to Docker
-      echo "JAR file downloaded: /tmp/git2go.jar"
-    '
+      docker build --build-arg JAR_FILE=/tmp/git2go.jar .
 
   volumeMounts:
     - mountPath: /tmp/git2go.jar
