@@ -21,10 +21,6 @@ runs:
     
       # Pass the downloaded JAR file to Docker
       docker build --build-arg JAR_FILE=/tmp/git2go.jar .
-
-  volumeMounts:
-    - mountPath: /tmp/git2go.jar
-      subPath: /tmp/git2go.jar
 #  env:
 #    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #    GH_ACTION_REPOSITORY: ${{ github.action_repository}}
