@@ -12,17 +12,17 @@ runs:
 args: |
   bash -c |
     # Fetch the release asset dynamically
-    RELEASE_JSON=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-        "https://github.aexp.com/api/v3/repos/${{ github.action_repository }}/releases/tags/${{ github.action_ref }}")
+    RELEASE_JSON=$(curl -s -H "Authorization: token $GH_TOKEN" \
+        "https://github.aexp.com/api/v3/repos/$GH_ACTION_REPOSITORY/releases/tags/$GH_ACTION_REF")
     RELEASE_ASSET_URL=$(echo $RELEASE_JSON | jq -r '.assets[0].browser_download_url')
   
     # Download the JAR file
-    curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -o /tmp/git2go.jar "$RELEASE_ASSET_URL"
+    curl -L -H "Authorization: token $GH_TOKEN" -o /tmp/git2go.jar "$RELEASE_ASSET_URL"
   
     # Pass the downloaded JAR file to Docker
     docker build --build-arg JAR_FILE=/tmp/git2go.jar .
-#  env:
-#    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#    GH_ACTION_REPOSITORY: ${{ github.action_repository}}
-#    GH_ACTION_REF: ${{ github.action_ref }}
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GH_ACTION_REPOSITORY: ${{ github.action_repository}}
+  GH_ACTION_REF: ${{ github.action_ref }}
 
