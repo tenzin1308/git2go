@@ -22,7 +22,7 @@ runs:
         echo "JAR file downloaded: /tmp/git2go.jar"
       shell: bash
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ github.token }}
         GH_ACTION_REPOSITORY: ${{ github.action_repository}}
         GH_ACTION_REF: ${{ github.action_ref }}
 
