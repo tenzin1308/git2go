@@ -5,7 +5,7 @@ FROM artifactory.aexp.com/dockerproxy/azul/zulu-openjdk@sha256:6d01d86257747b869
 WORKDIR /app
 
 # Copy the JAR from the host system
-COPY git2go.jar /app/git2go.jar
+COPY /tmp/git2go.jar /app/git2go.jar
 
 # Command to run the application using Java
 CMD ["java", "-jar", "/app/git2go.jar"]
