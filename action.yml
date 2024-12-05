@@ -1,10 +1,52 @@
 name: "Git2Go"
 description: "An Umbrella GitHub Action providing multiple functionalities."
 inputs:
+  ### Required Field
   action_name:
     description: "The name of the action to be invoked."
     required: true
+  ### Common Variable and Default GitHub Environment Variables
+  dry_run:
+    description: "The dry run flag."
+    required: false
+    default: false
+  github_token:
+    description: "The GitHub Token."
+    required: false
+    default: ${{ github.token }}
+  github_api_url:
+    description: "The GitHub API URL."
+    required: false
+    default: ${{ github.api_url }}
+  github_graphql_url:
+    description: "The GitHub GraphQL URL."
+    required: false
+    default: ${{ github.graphql_url }}
+  github_repository:
+    description: "The GitHub Repository."
+    required: false
+    default: ${{ github.repository }}
+  github_repository_owner:
+    description: "The GitHub Repository Owner."
+    required: false
+    default: ${{ github.repository_owner }}
+  github_api_version:
+    description: "The GitHub API Version."
+    required: false
+    default: "application/vnd.github.v3+json"
+  ### Assign Reviewers Action Inputs
+  reviewers_config_path:
+    description: "The path to the reviewers configuration file."
+    required: false
+    default: ".github/reviewers.yml"
+  reviewers_pull_request_number:
+    description: "The pull request number."
+    required: false
+    default: ${{ github.event.number }}
 
+
+outputs:
+### Output Fields
 
 runs:
   using: "composite"
