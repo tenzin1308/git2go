@@ -45,8 +45,8 @@ inputs:
     default: ${{ github.event.number }}
 
 
-outputs:
-### Output Fields
+#outputs:
+#### Output Fields
 
 runs:
   using: "composite"
