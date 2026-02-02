@@ -55,4 +55,4 @@ inputs:
 
 runs:
   using: docker
-  image: ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/git2go:__VERSION__
+  image: ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/__MAJOR__:__TAG__
