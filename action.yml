@@ -1,9 +1,14 @@
 name: "Git2Go"
 description: "An Umbrella GitHub Action providing multiple functionalities."
+author: "TENZIN TASHI"
+
 inputs:
   ### Required Field
   action_name:
     description: "The name of the action to be invoked."
+    required: true
+  config:
+    description: "YAML config for the action"
     required: true
   ### Common Variable and Default GitHub Environment Variables
   dry_run:
@@ -49,26 +54,5 @@ inputs:
 #### Output Fields
 
 runs:
-  using: "composite"
-  steps:
-    - name: Fetch the release asset dynamically
-      id: fetch-release-asset
-      run: |
-        # Fetch the release asset dynamically
-        RELEASE_JSON=$(curl -s -H "Authorization: token $GH_TOKEN" \
-            "https://github.aexp.com/api/v3/repos/$GH_ACTION_REPOSITORY/releases/tags/$GH_ACTION_REF")
-        RELEASE_ASSET_URL=$(echo $RELEASE_JSON | jq -r '.assets[0].url')
-        
-        # Download the JAR file
-        curl -L -H "Authorization: token $GH_TOKEN" -H "Accept: application/octet-stream" -o /tmp/git2go.jar "$RELEASE_ASSET_URL"
-        echo "JAR file downloaded: /tmp/git2go.jar"
-      shell: bash
-      env:
-        GH_TOKEN: ${{ github.token }}
-        GH_ACTION_REPOSITORY: ${{ github.action_repository}}
-        GH_ACTION_REF: ${{ github.action_ref }}
-    - name: Run the action
-      id: run-action
-      run: |
-        java -jar /tmp/git2go.jar ${{ inputs.action_name }}
-      shell: bash
+  using: docker
+  image: ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/git2go:__VERSION__

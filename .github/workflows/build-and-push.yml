@@ -1,0 +1,77 @@
+name: Build & Push Git2Go Image
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: aexp-ubuntu-latest-medium
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Extract Version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#ref/tags/v}
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "major=v$MAJOR" >> $GITHUB_OUTPUT
+
+      - name: Set up Java
+        uses: amex-eng/setup-java@v4.2.2
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Setup Maven
+        uses: amex-eng/setup-maven@ae4bb8b0c9f98e490c38e1c17d9e63c9acab5705
+        with:
+          maven-version: 3.9.6
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+
+      - name: Build uber Jar
+        run: mvn clean package -DskipTests
+
+      - name: Update action.yml
+        run: |
+          sed -i "s/__VERSION__/${{ steps.version.outputs.version }}/g" action.yml
+
+      - name: Commit action.yml
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add action.yml
+          git commit -m "Release v${{ steps.version.outputs.version }}"
+
+      - name: Docker login to Artifactory
+        run: |
+          docker login ${{ secrets.DOCKER_PAAS_REGISTRY }} \
+            -u ${{ secrets.ARTIFACTORY_USERNAME }} \
+            -p ${{ secrets.ARTIFACTORY_PASSWORD }}
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg JAR_FILE=target/git2go-${{ steps.version.outputs.version }}.jar \
+            -t ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/git2go:${{ steps.version.outputs.version }} \
+            -t ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/git2go:${{ steps.version.outputs.major }} \
+            -t ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/git2go:latest \
+            .
+
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/git2go:${{ steps.version.outputs.version }}
+          docker push ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/git2go:${{ steps.version.outputs.major }}
+          docker push ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/git2go:latest
+
+      - name: Update major tag
+        run: |
+          git tag -f ${{ steps.version.outputs.major }}
+          git push origin ${{ steps.version.outputs.major }} --force
