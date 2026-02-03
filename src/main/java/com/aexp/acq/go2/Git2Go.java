@@ -1,71 +1,47 @@
 package com.aexp.acq.go2;
 
 import com.aexp.acq.go2.base.App;
-import com.aexp.acq.go2.base.BaseComponent;
-import com.aexp.acq.go2.utils.BaseUtils;
-import com.aexp.acq.go2.utils.CommonConstants;
-import com.aexp.acq.go2.validator.RequestValidator;
-
-import java.lang.reflect.InvocationTargetException;
+import com.aexp.acq.go2.config.ActionConfig;
+import com.aexp.acq.go2.config.ConfigLoader;
+import com.aexp.acq.go2.config.ConfigValidator;
+import com.aexp.acq.go2.core.Action;
+import com.aexp.acq.go2.core.ActionContext;
+import com.aexp.acq.go2.core.ActionRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Git2Go {
 
-  private static String action = null;
+  private static final Logger log = LoggerFactory.getLogger(Git2Go.class);
 
   public static void main(String[] args) {
-    // initialize the application
-    init();
-
-    // execute the action
-    Object response = executeActions(action);
-    System.out.println("Hello and welcome!");
-
-    // return the response and graceful shutdown
-    {
-      System.out.println(response);
-
-    }
-  }
-
-  private static void init() {
-    // App Initialization
-    {
-      App.init(Git2Go.class.getSimpleName());
-      App.instance().loadProperties("config.properties");
-      App.instance().loadEnvironmentProperties();
-      App.loadDocumentModels("doc_models", "models/");
-    }
-
-    action = App.instance().getProperty("action.name");
-    // validate the request
-    {
-      if (BaseUtils.isNullOrEmpty(action) == true || CommonConstants.Actions.getAllAction().contains(action) == false) {
-        System.err.println("Invalid action name");
-        System.exit(1);
-      }
-      RequestValidator requestValidator = (RequestValidator)CommonConstants.BizAppValidator.getValidator(action);
-      requestValidator.validateInput();
-    }
-
-  }
-
-  private static Object executeActions(String action) {
     try {
-      // load the action class
-      Class<?> clazz = Class.forName(CommonConstants.Actions.getAction(action));
+      log.info("::group::Git2Go Action");
 
-      // create an instance of the class
-      BaseComponent baseComponent = (BaseComponent)clazz.getConstructor(String.class).newInstance(action);
-      return baseComponent.execute();
-    }
-    catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
-    catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    }
+      // App Initialization
+      {
+        App.init(Git2Go.class.getSimpleName());
+        App.instance().loadProperties("config.properties");
+        App.instance().loadEnvironmentProperties();
+        App.loadDocumentModels("doc_models", "models/");
+      }
 
-    return null;
+      // Load action config
+      ActionConfig config = ConfigLoader.load();
+      ConfigValidator.validate(config);
+
+      // Execute action
+      Action action = ActionRegistry.get(config.getAction());
+      log.info("::group::Running actions: {}", action.name());
+      action.execute(new ActionContext(config));
+      log.info("::endgroup::");
+
+      log.info("::endgroup::");
+    }
+    catch (Exception e) {
+      log.error("Action failed: {}", e.getMessage(), e);
+      System.exit(1);
+    }
   }
 
 }
