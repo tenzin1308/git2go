@@ -41,8 +41,8 @@ jobs:
 
       - name: Update action.yml
         run: |
-          sed -i "s/__MAJOR__/${{ steps.version.outputs.major }}/g" action.yml
-          sed -i "s/__TAG__/${{ steps.version.outputs.version }}/g" action.yml
+          sed -i "s#__MAJOR__#${{ steps.version.outputs.major }}#g" action.yml
+          sed -i "s#__TAG__#${{ steps.version.outputs.version }}#g" action.yml
 
       - name: Commit action.yml
         run: |
