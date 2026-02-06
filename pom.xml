@@ -20,6 +20,69 @@
         <unify.jdocs.version>1.9.1</unify.jdocs.version>
     </properties>
 
+    <!-- Pin versions for transitive consistency -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Force Kotlin to 1.8.21 -->
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-stdlib</artifactId>
+                <version>1.8.21</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-stdlib-jdk8</artifactId>
+                <version>1.8.21</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-stdlib-common</artifactId>
+                <version>1.8.21</version>
+            </dependency>
+
+            <!-- Force okio to a single version -->
+            <dependency>
+                <groupId>com.squareup.okio</groupId>
+                <artifactId>okio</artifactId>
+                <version>3.6.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okio</groupId>
+                <artifactId>okio-jvm</artifactId>
+                <version>3.6.0</version>
+            </dependency>
+
+            <!-- Align Jackson versions to 2.16.1 -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>2.16.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>2.16.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.16.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-yaml</artifactId>
+                <version>2.16.1</version>
+            </dependency>
+
+            <!-- Align Jakarta EL versions -->
+            <dependency>
+                <groupId>jakarta.el</groupId>
+                <artifactId>jakarta.el-api</artifactId>
+                <version>4.0.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <!-- HTTP client -->
         <dependency>
@@ -61,18 +124,24 @@
             <version>${log4j2.version}</version>
         </dependency>
 
-        <!-- Check Style -->
+        <!-- Check Style: exclude runtime slf4j-simple that conflicts -->
         <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
             <version>13.2.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- YAML -->
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>2.21.0</version>
+            <version>2.16.1</version>
         </dependency>
 
         <!-- Bean Validation -->
@@ -81,10 +150,12 @@
             <artifactId>hibernate-validator</artifactId>
             <version>9.1.0.Final</version>
         </dependency>
+
+        <!-- Jakarta EL -->
         <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.el</artifactId>
-            <version>4.0.2</version>
+            <groupId>jakarta.el</groupId>
+            <artifactId>jakarta.el-api</artifactId>
+            <version>4.0.0</version>
         </dependency>
     </dependencies>
 
@@ -100,6 +171,8 @@
                     <release>21</release>
                 </configuration>
             </plugin>
+
+            <!-- Copy git hooks -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -136,40 +209,108 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <!-- Set createDependencyReducedPom to false for Uber JAR -->
+                            <!-- Replace the original artifact with the shaded one (single fat JAR) -->
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <!-- Filters to exclude unwanted files from dependencies -->
+
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
                                     <excludes>
+                                        <!-- module descriptors (including multi-release variants) -->
+                                        <exclude>module-info.class</exclude>
+                                        <exclude>META-INF/versions/**/module-info.class</exclude>
+
+                                        <!-- kotlin metadata duplicates -->
+                                        <exclude>META-INF/*.kotlin_module</exclude>
+
                                         <!-- signature files -->
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
 
-                                        <!-- block other SLF4J provider classes and common provider packages -->
-                                        <exclude>**/org/slf4j/impl/**</exclude>
+                                        <!-- exclude common provider classes (we ship log4j-slf4j-impl only) -->
                                         <exclude>**/org/slf4j/simple/**</exclude>
                                         <exclude>**/ch/qos/logback/**</exclude>
                                         <exclude>**/org/apache/log4j/**</exclude>
+
+                                        <!-- avoid copying dependency manifests verbatim -->
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+
+                                        <!-- duplicates reported earlier -->
+                                        <exclude>META-INF/LICENSE.md</exclude>
+                                        <exclude>META-INF/DEPENDENCIES</exclude>
+                                        <exclude>META-INF/plexus/components.xml</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
 
                             <transformers>
+                                <!-- Single manifest with Main-Class -->
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.aexp.acq.go2.Git2Go</mainClass>
                                 </transformer>
+
+                                <!-- Merge ServiceLoader files -->
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+
+                                <!-- Merge Log4j2 plugin caches so all Log4j plugins are discovered -->
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat
+                                    </resource>
+                                </transformer>
+
+                                <!-- Append NOTICE / LICENSE files to produce combined files -->
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/NOTICE</resource>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/NOTICE.txt</resource>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/NOTICE.md</resource>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/LICENSE</resource>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/LICENSE.txt</resource>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/LICENSE.md</resource>
+                                </transformer>
+
+                                <!-- Drop DEPENDENCIES and plexus components metadata from fat jar -->
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                                    <resource>META-INF/DEPENDENCIES</resource>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                                    <resource>META-INF/plexus/components.xml</resource>
+                                </transformer>
+
+                                <!-- Prevent other noisy metadata from being duplicated in jar -->
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                                    <resource>META-INF/DEPENDENCIES.txt</resource>
+                                </transformer>
                             </transformers>
+
+                            <minimizeJar>false</minimizeJar>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 
