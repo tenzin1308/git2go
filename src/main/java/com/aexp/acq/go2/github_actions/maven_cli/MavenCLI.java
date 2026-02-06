@@ -1,4 +1,4 @@
-package com.aexp.acq.go2.github_actions;
+package com.aexp.acq.go2.github_actions.maven_cli;
 
 import com.aexp.acq.go2.base.App;
 import com.aexp.acq.go2.base.BaseComponent;

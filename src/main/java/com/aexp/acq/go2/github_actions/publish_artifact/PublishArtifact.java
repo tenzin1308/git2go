@@ -1,10 +1,8 @@
 package com.aexp.acq.go2.github_actions.publish_artifact;
 
 import com.aexp.acq.go2.core.Action;
-import com.aexp.acq.go2.core.ActionContext;
-import com.aexp.acq.go2.utils.logging.GitHubLogger;
 
-public class PublishArtifact implements Action {
+public final class PublishArtifact implements Action<PublishArtifactConfig> {
 
   @Override
   public String name() {
@@ -12,9 +10,12 @@ public class PublishArtifact implements Action {
   }
 
   @Override
-  public void execute(ActionContext context) {
-    GitHubLogger.info("Running Publish Artifact action");
-    GitHubLogger.info("Params: " + context.getConfig().getParams());
+  public Class<PublishArtifactConfig> configClass() {
+    return PublishArtifactConfig.class;
+  }
+
+  @Override
+  public void execute(PublishArtifactConfig cfg) throws Exception {
     //    String githubOutputPath = System.getenv("GITHUB_OUTPUT");
     //    if (githubOutputPath == null) {
     //      throw new IllegalArgumentException("GITHUB_OUTPUT is not set (not running in GitHub Actions)");
