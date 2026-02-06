@@ -30,6 +30,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up JDK
+        uses: amex-eng/setup-java@v4.2.2
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Setup Maven
+        uses: amex-eng/setup-maven@ae4bb8b0c9f98e490c38e1c17d9e63c9acab5705
+        with:
+          maven-version: 3.9.6
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+
       - name: Determine version (from input or mvn)
         id: version
         run: |
@@ -59,20 +73,6 @@ jobs:
           MAJOR="v$(echo "${VERSION}" | cut -d. -f1)"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "major=${MAJOR}" >> "$GITHUB_OUTPUT"
-
-      - name: Set up JDK
-        uses: amex-eng/setup-java@v4.2.2
-        with:
-          distribution: 'zulu'
-          java-version: '21'
-          cache: 'maven'
-
-      - name: Setup Maven
-        uses: amex-eng/setup-maven@ae4bb8b0c9f98e490c38e1c17d9e63c9acab5705
-        with:
-          maven-version: 3.9.6
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
 
       - name: Build uber JAR
         run: mvn -B clean package -DskipTests
