@@ -22,4 +22,4 @@ inputs:
 
 runs:
   using: docker
-  image: ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/__MAJOR__:__TAG__
+  image: "__REGISTRY__/${{ github.repository }}/__MAJOR__:__TAG__"

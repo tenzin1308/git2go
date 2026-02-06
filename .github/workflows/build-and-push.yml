@@ -1,21 +1,29 @@
-name: Build & Push Git2Go Image
+name: Build & Publish
 
 on:
   push:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
 jobs:
-  build:
+  build-and-publish:
     runs-on: aexp-ubuntu-latest-medium
 
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Extract Version + Major
         id: version
         run: |
+          set -euo pipefail
           REF="${GITHUB_REF:-}"
           echo "GITHUB_REF='$REF'"
           
@@ -48,31 +56,119 @@ jobs:
       - name: Build uber Jar
         run: mvn -B clean package -DskipTests
 
+      - name: Prepare image variables
+        id: imgvars
+        run: |
+          set -euo pipefail
+          REGISTRY="${{ secrets.DOCKER_PAAS_REGISTRY }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          MAJOR="${{ steps.version.outputs.major }}"
+          
+          # Compose full image names
+          IMAGE_FULL="${REGISTRY}/${{ github.repository }}/${MAJOR}:${VERSION}"
+          IMAGE_MAJOR="${REGISTRY}/${{ github.repository }}/${MAJOR}"
+          IMAGE_LATEST="${REGISTRY}/${{ github.repository }}/${MAJOR}:latest"
+          
+          echo "image_full=$IMAGE_FULL" >> "$GITHUB_OUTPUT"
+          echo "image_major=$IMAGE_MAJOR" >> "$GITHUB_OUTPUT"
+          echo "image_latest=$IMAGE_LATEST" >> "$GITHUB_OUTPUT"
+          echo "registry=$REGISTRY" >> "$GITHUB_OUTPUT"
+
       - name: Update action.yml
         run: |
-          sed -i "s#__MAJOR__#${{ steps.version.outputs.major }}#g" action.yml
-          sed -i "s#__TAG__#${{ steps.version.outputs.version }}#g" action.yml
+          set -euo pipefail
+          REGISTRY="${{ steps.imgvars.outputs.registry }}"
+          # safe escaping for registry value
+          REG_ESCAPED=$(printf '%s' "$REGISTRY" | sed 's/[\/&]/\\&/g')
+          
+          MAJOR="${{ steps.version.outputs.major }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          # Replace __REGISTRY__, __MAJOR__, __TAG__
+          sed -i "s|__REGISTRY__|${REG_ESCAPED}|g" action.yml
+          sed -i "s|__MAJOR__|${MAJOR}|g" action.yml
+          sed -i "s|__TAG__|${VERSION}|g" action.yml
+          
+          echo "Updated action.yml to use: ${REGISTRY}/${{ github.repository }}/${MAJOR}:${VERSION}"
 
       - name: Docker login to Artifactory
         run: |
-          echo "${{ secrets.ARTIFACTORY_PASSWORD }}" | docker login ${{ secrets.DOCKER_PAAS_REGISTRY }} \
-            --username ${{ secrets.ARTIFACTORY_USERNAME }} \
-            --password-stdin
+          set -euo pipefail
+          echo "${{ secrets.ARTIFACTORY_PASSWORD }}" | docker login "${{ secrets.DOCKER_PAAS_REGISTRY }}" \
+            --username "${{ secrets.ARTIFACTORY_USERNAME }}" --password-stdin
 
       - name: Build Docker image
         run: |
+          set -euo pipefail
           docker build \
             --build-arg JAR_FILE=target/git2go-${{ steps.version.outputs.version }}.jar \
-            -t ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/${{ steps.version.outputs.major }}:${{ steps.version.outputs.version }} \
-            -t ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/${{ steps.version.outputs.major }}:latest \
+            -t "${{ steps.imgvars.outputs.image_full }}" \
+            -t "${{ steps.imgvars.outputs.image_major }}:${{ steps.version.outputs.version }}" \
+            -t "${{ steps.imgvars.outputs.image_major }}:latest" \
             .
 
       - name: Push Docker Image
         run: |
-          docker push ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/${{ steps.version.outputs.major }}:${{ steps.version.outputs.version }}
-          docker push ${{ secrets.DOCKER_PAAS_REGISTRY }}/${{ github.repository }}/${{ steps.version.outputs.major }}:latest
+          set -euo pipefail
+          docker push "${{ steps.imgvars.outputs.image_full }}"
+          docker push "${{ steps.imgvars.outputs.image_major }}:${{ steps.version.outputs.version }}"
+          docker push "${{ steps.imgvars.outputs.image_major }}:latest"
 
-      - name: Update major tag
+      - name: Create local commit for action.yml change
+        id: commit_local
         run: |
-          git tag -f ${{ steps.version.outputs.major }}
-          git push origin ${{ steps.version.outputs.major }} --force
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # If action.yml has changes, commit them locally. We will not push branches.
+          if git status --porcelain | grep -q "action.yml"; then
+            git add action.yml
+            git commit -m "chore(release): set action image to ${{ steps.imgvars.outputs.image_full }}" || true
+          else
+            echo "No changes to action.yml; nothing to commit."
+          fi
+          
+          COMMIT_SHA=$(git rev-parse --verify HEAD)
+          echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Create annotated tag(s) locally (pointing to commit)
+        id: create_tags
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          MAJOR="${{ steps.version.outputs.major }}"
+          COMMIT_SHA="${{ steps.commit_local.outputs.commit_sha }}"
+          
+          TAG_NAME="v${VERSION}"
+          MAJOR_TAG="${MAJOR}"
+          
+          # Create annotated exact-version tag pointing at the prepared commit
+          git tag -a "${TAG_NAME}" -m "Release ${TAG_NAME}" "${COMMIT_SHA}"
+          
+          # Create or update local major floating tag to the same commit
+          git tag -f "${MAJOR_TAG}" "${COMMIT_SHA}"
+          
+          echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "major_tag=${MAJOR_TAG}" >> "$GITHUB_OUTPUT"
+          echo "created_tags=${TAG_NAME},${MAJOR_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Push only tags to remote
+        env:
+          TAG_NAME: ${{ steps.create_tags.outputs.tag_name }}
+          MAJOR_TAG: ${{ steps.create_tags.outputs.major_tag }}
+        run: |
+          set -euo pipefail
+          echo "Pushing exact version tag ${TAG_NAME}..."
+          git push origin "refs/tags/${TAG_NAME}"
+          
+          echo "Pushing major-floating tag ${MAJOR_TAG} (force update of tag only)..."
+          git push origin --force "refs/tags/${MAJOR_TAG}"
+
+      - name: Create GitHub Release (optional, friendly metadata)
+        if: always()
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "v${{ steps.version.outputs.version }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
