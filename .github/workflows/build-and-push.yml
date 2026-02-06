@@ -16,8 +16,17 @@ jobs:
       - name: Extract Version + Major
         id: version
         run: |
-          VERSION=${GITHUB_REF#ref/tags/v}
-          MAJOR=v$(echo $VERSION | cut -d. -f1)
+          REF="${GITHUB_REF:-}"
+          echo "GITHUB_REF='$REF'"
+          
+          # Remove leading "refs/tags/" if present
+          REF_NO_PREFIX="${REF#refs/tags/}"
+          
+          VERSION="${REF_NO_PREFIX#v}"
+          MAJOR="v$(echo "$VERSION" | cut -d. -f1)"
+          
+          echo "Computed VERSION='$VERSION'"
+          echo "Computed MAJOR='$MAJOR'"
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "major=$MAJOR" >> $GITHUB_OUTPUT
@@ -54,9 +63,9 @@ jobs:
 
       - name: Docker login to Artifactory
         run: |
-          docker login ${{ secrets.DOCKER_PAAS_REGISTRY }} \
-            -u ${{ secrets.ARTIFACTORY_USERNAME }} \
-            -p ${{ secrets.ARTIFACTORY_PASSWORD }}
+          echo "${{ secrets.ARTIFACTORY_PASSWORD }}" | docker login ${{ secrets.DOCKER_PAAS_REGISTRY }} \
+            --username ${{ secrets.ARTIFACTORY_USERNAME }} \
+            --password-stdin
 
       - name: Build Docker image
         run: |
