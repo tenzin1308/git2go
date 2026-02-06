@@ -1,9 +1,20 @@
-name: Build & Publish
+name: Manual Release (tags-only, workflow_dispatch)
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Optional: version to release (e.g. 1.2.3). If empty, extracted from pom.xml'
+        required: false
+        default: ''
+      push_images:
+        description: 'Build & push Docker images? (true/false)'
+        required: false
+        default: 'true'
+      overwrite_placeholder:
+        description: 'Allow overwriting an existing exact-version tag if remote action.yml contains placeholders (true/false)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
@@ -11,35 +22,41 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-publish:
+  manual-release:
     runs-on: aexp-ubuntu-latest-medium
-
     steps:
-      - name: Checkout Repo
+      - name: Checkout (full history)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Extract Version + Major
+      - name: Determine version (from input or pom.xml)
         id: version
         run: |
           set -euo pipefail
-          REF="${GITHUB_REF:-}"
-          echo "GITHUB_REF='$REF'"
-          
-          # Remove leading "refs/tags/" if present
-          REF_NO_PREFIX="${REF#refs/tags/}"
-          
-          VERSION="${REF_NO_PREFIX#v}"
-          MAJOR="v$(echo "$VERSION" | cut -d. -f1)"
-          
-          echo "Computed VERSION='$VERSION'"
-          echo "Computed MAJOR='$MAJOR'"
-          
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "major=$MAJOR" >> $GITHUB_OUTPUT
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            echo "Using user-provided version: ${VERSION}"
+          else
+            # Extract version from pom.xml; adapt XPath if your pom uses parent properties
+            VERSION=$(xmllint --xpath "/*[local-name()='project']/*[local-name()='version']/text()" pom.xml 2>/dev/null || true)
+            if [ -z "${VERSION}" ]; then
+              # fallback: try reading from parent/project/version or from properties if needed
+              VERSION=$(xmllint --xpath "/*[local-name()='project']/*[local-name()='parent']/*[local-name()='version']/text()" pom.xml 2>/dev/null || true)
+            fi
+            if [ -z "${VERSION}" ]; then
+              echo "::error::Could not extract version from pom.xml; please provide 'version' input."
+              exit 1
+            fi
+            echo "Extracted version from pom.xml: ${VERSION}"
+          fi
 
-      - name: Set up Java
+          # normalize and compute MAJOR tag (v<major>)
+          MAJOR="v$(echo "${VERSION}" | cut -d. -f1)"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "major=${MAJOR}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK (Maven build)
         uses: amex-eng/setup-java@v4.2.2
         with:
           distribution: 'zulu'
@@ -47,13 +64,13 @@ jobs:
           cache: 'maven'
 
       - name: Setup Maven
-        uses: amex-eng/setup-maven@ae4bb8b0c9f98e490c38e1c17d9e63c9acab5705
+        uses: amex-eng/setup-maven@<REDACTED>
         with:
           maven-version: 3.9.6
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
 
-      - name: Build uber Jar
+      - name: Build fat JAR
         run: mvn -B clean package -DskipTests
 
       - name: Prepare image variables
@@ -63,43 +80,22 @@ jobs:
           REGISTRY="${{ secrets.DOCKER_PAAS_REGISTRY }}"
           VERSION="${{ steps.version.outputs.version }}"
           MAJOR="${{ steps.version.outputs.major }}"
-          
-          # Compose full image names
+
           IMAGE_FULL="${REGISTRY}/${{ github.repository }}/${MAJOR}:${VERSION}"
           IMAGE_MAJOR="${REGISTRY}/${{ github.repository }}/${MAJOR}"
-          IMAGE_LATEST="${REGISTRY}/${{ github.repository }}/${MAJOR}:latest"
-          
-          echo "image_full=$IMAGE_FULL" >> "$GITHUB_OUTPUT"
-          echo "image_major=$IMAGE_MAJOR" >> "$GITHUB_OUTPUT"
-          echo "image_latest=$IMAGE_LATEST" >> "$GITHUB_OUTPUT"
-          echo "registry=$REGISTRY" >> "$GITHUB_OUTPUT"
+          IMAGE_LATEST="${IMAGE_MAJOR}:latest"
 
-      - name: Update action.yml
+          echo "image_full=${IMAGE_FULL}" >> "$GITHUB_OUTPUT"
+          echo "image_major=${IMAGE_MAJOR}" >> "$GITHUB_OUTPUT"
+          echo "image_latest=${IMAGE_LATEST}" >> "$GITHUB_OUTPUT"
+          echo "registry=${REGISTRY}" >> "$GITHUB_OUTPUT"
+
+      - name: Optionally build & push Docker images
+        if: ${{ github.event.inputs.push_images == 'true' }}
         run: |
           set -euo pipefail
-          REGISTRY="${{ steps.imgvars.outputs.registry }}"
-          # safe escaping for registry value
-          REG_ESCAPED=$(printf '%s' "$REGISTRY" | sed 's/[\/&]/\\&/g')
-          
-          MAJOR="${{ steps.version.outputs.major }}"
-          VERSION="${{ steps.version.outputs.version }}"
-          
-          # Replace __REGISTRY__, __MAJOR__, __TAG__
-          sed -i "s|__REGISTRY__|${REG_ESCAPED}|g" action.yml
-          sed -i "s|__MAJOR__|${MAJOR}|g" action.yml
-          sed -i "s|__TAG__|${VERSION}|g" action.yml
-          
-          echo "Updated action.yml to use: ${REGISTRY}/${{ github.repository }}/${MAJOR}:${VERSION}"
+          echo "${{ secrets.ARTIFACTORY_PASSWORD }}" | docker login "${{ secrets.DOCKER_PAAS_REGISTRY }}" --username "${{ secrets.ARTIFACTORY_USERNAME }}" --password-stdin
 
-      - name: Docker login to Artifactory
-        run: |
-          set -euo pipefail
-          echo "${{ secrets.ARTIFACTORY_PASSWORD }}" | docker login "${{ secrets.DOCKER_PAAS_REGISTRY }}" \
-            --username "${{ secrets.ARTIFACTORY_USERNAME }}" --password-stdin
-
-      - name: Build Docker image
-        run: |
-          set -euo pipefail
           docker build \
             --build-arg JAR_FILE=target/git2go-${{ steps.version.outputs.version }}.jar \
             -t "${{ steps.imgvars.outputs.image_full }}" \
@@ -107,65 +103,147 @@ jobs:
             -t "${{ steps.imgvars.outputs.image_major }}:latest" \
             .
 
-      - name: Push Docker Image
-        run: |
-          set -euo pipefail
           docker push "${{ steps.imgvars.outputs.image_full }}"
           docker push "${{ steps.imgvars.outputs.image_major }}:${{ steps.version.outputs.version }}"
           docker push "${{ steps.imgvars.outputs.image_major }}:latest"
 
-      - name: Create local commit for action.yml change
+      - name: Replace placeholders in action.yml
+        run: |
+          set -euo pipefail
+          REGISTRY="${{ steps.imgvars.outputs.registry }}"
+          REG_ESCAPED=$(printf '%s' "$REGISTRY" | sed 's/[\/&]/\\&/g')
+          MAJOR="${{ steps.version.outputs.major }}"
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Replace placeholders in repo's action.yml
+          sed -i "s|__REGISTRY__|${REG_ESCAPED}|g" action.yml
+          sed -i "s|__MAJOR__|${MAJOR}|g" action.yml
+          sed -i "s|__TAG__|${VERSION}|g" action.yml
+
+          echo "Updated action.yml to: ${REGISTRY}/${{ github.repository }}/${MAJOR}:${VERSION}"
+
+      - name: Create a local commit (tags-only)
         id: commit_local
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # If action.yml has changes, commit them locally. We will not push branches.
+
           if git status --porcelain | grep -q "action.yml"; then
             git add action.yml
-            git commit -m "chore(release): set action image to ${{ steps.imgvars.outputs.image_full }}" || true
+            git commit -m "chore(release): action.yml resolved for v${{ steps.version.outputs.version }}" || true
           else
-            echo "No changes to action.yml; nothing to commit."
+            echo "No change to action.yml; using current HEAD as commit."
           fi
-          
+
           COMMIT_SHA=$(git rev-parse --verify HEAD)
           echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
 
-      - name: Create annotated tag(s) locally (pointing to commit)
-        id: create_tags
+      - name: Create safe annotated tags and decide push strategy (allow overwrite if placeholder requested)
+        id: create_safe_tags
         run: |
           set -euo pipefail
           VERSION="${{ steps.version.outputs.version }}"
           MAJOR="${{ steps.version.outputs.major }}"
           COMMIT_SHA="${{ steps.commit_local.outputs.commit_sha }}"
-          
+          OVERWRITE_PLACEHOLDER="${{ github.event.inputs.overwrite_placeholder }}"
+
           TAG_NAME="v${VERSION}"
           MAJOR_TAG="${MAJOR}"
-          
-          # Create annotated exact-version tag pointing at the prepared commit
-          git tag -a "${TAG_NAME}" -m "Release ${TAG_NAME}" "${COMMIT_SHA}"
-          
-          # Create or update local major floating tag to the same commit
-          git tag -f "${MAJOR_TAG}" "${COMMIT_SHA}"
-          
+          REMOTE_TMP_REF="refs/tags/${TAG_NAME}-remote"
+          PUSH_EXACT="false"
+
+          echo "Prepared local commit: ${COMMIT_SHA}"
+          echo "Exact tag to ensure: ${TAG_NAME}"
+          echo "Major floating tag: ${MAJOR_TAG}"
+          echo "Overwrite placeholder allowed: ${OVERWRITE_PLACEHOLDER}"
+
+          # Create or update local tags to point at our commit (local only)
+          git tag -f "${TAG_NAME}" "${COMMIT_SHA}" || true
+          git tag -f "${MAJOR_TAG}" "${COMMIT_SHA}" || true
+
+          # Does remote exact tag exist?
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null 2>&1; then
+            echo "Remote tag ${TAG_NAME} exists — fetching into temporary ref ${REMOTE_TMP_REF}"
+            git fetch origin "refs/tags/${TAG_NAME}:${REMOTE_TMP_REF}" || true
+            if git show-ref --verify --quiet "${REMOTE_TMP_REF}"; then
+              REMOTE_COMMIT=$(git rev-parse "${REMOTE_TMP_REF}^{ }")
+              echo "Remote tag ${TAG_NAME} points to commit ${REMOTE_COMMIT}"
+            else
+              REMOTE_COMMIT=""
+            fi
+          else
+            REMOTE_COMMIT=""
+            echo "Remote tag ${TAG_NAME} does not exist."
+          fi
+
+          # Compare / decide
+          if [ -z "${REMOTE_COMMIT}" ]; then
+            echo "No remote exact tag — will push exact tag."
+            PUSH_EXACT="true"
+          else
+            if [ "${REMOTE_COMMIT}" = "${COMMIT_SHA}" ]; then
+              echo "Remote exact tag already points to our commit — skipping exact push."
+              PUSH_EXACT="false"
+            else
+              if [ "${OVERWRITE_PLACEHOLDER}" = "true" ]; then
+                # inspect remote action.yml for placeholders
+                if git ls-tree -r --name-only "${REMOTE_COMMIT}" | grep -q "^action.yml$"; then
+                  REMOTE_ACTION=$(git show "${REMOTE_COMMIT}:action.yml" || true)
+                else
+                  REMOTE_ACTION=""
+                fi
+
+                if echo "${REMOTE_ACTION}" | grep -q "__REGISTRY__\\|__MAJOR__\\|__TAG__"; then
+                  echo "Remote exact tag points to a commit with placeholder action.yml and overwrite_placeholder=true -> permitting force overwrite of exact tag."
+                  PUSH_EXACT="force"
+                else
+                  echo "::error::Remote exact tag exists and points elsewhere, and remote action.yml does not contain placeholders. Aborting to preserve immutability."
+                  echo "Remote commit: ${REMOTE_COMMIT}"
+                  echo "Local  commit: ${COMMIT_SHA}"
+                  exit 1
+                fi
+              else
+                echo "::error::Remote exact tag exists and points to a different commit. Set overwrite_placeholder=true if you explicitly want to replace a placeholder-tag. Otherwise bump the version."
+                exit 1
+              fi
+            fi
+          fi
+
+          # Output decisions
+          echo "push_exact=${PUSH_EXACT}" >> "$GITHUB_OUTPUT"
           echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
           echo "major_tag=${MAJOR_TAG}" >> "$GITHUB_OUTPUT"
-          echo "created_tags=${TAG_NAME},${MAJOR_TAG}" >> "$GITHUB_OUTPUT"
 
-      - name: Push only tags to remote
-        env:
-          TAG_NAME: ${{ steps.create_tags.outputs.tag_name }}
-          MAJOR_TAG: ${{ steps.create_tags.outputs.major_tag }}
+          # Cleanup temp ref if present
+          if git show-ref --verify --quiet "${REMOTE_TMP_REF}"; then
+            git update-ref -d "${REMOTE_TMP_REF}" || true
+          fi
+
+      - name: Push exact tag (if new/allowed) and update major tag (tags only)
         run: |
           set -euo pipefail
-          echo "Pushing exact version tag ${TAG_NAME}..."
-          git push origin "refs/tags/${TAG_NAME}"
-          
-          echo "Pushing major-floating tag ${MAJOR_TAG} (force update of tag only)..."
+          TAG_NAME="${{ steps.create_safe_tags.outputs.tag_name }}"
+          MAJOR_TAG="${{ steps.create_safe_tags.outputs.major_tag }}"
+          PUSH_EXACT="${{ steps.create_safe_tags.outputs.push_exact }}"
+          COMMIT_SHA="${{ steps.commit_local.outputs.commit_sha }}"
+
+          # push exact tag (new / forced if allowed)
+          if [ "${PUSH_EXACT}" = "true" ]; then
+            echo "Pushing exact tag ${TAG_NAME}..."
+            git push origin "refs/tags/${TAG_NAME}"
+          elif [ "${PUSH_EXACT}" = "force" ]; then
+            echo "Force-pushing exact tag ${TAG_NAME} (allowed placeholder overwrite)..."
+            git push origin --force "refs/tags/${TAG_NAME}"
+          else
+            echo "Skipping push of exact tag ${TAG_NAME} (already correct)."
+          fi
+
+          # Force update major tag to point at the release commit (intentional floating pointer)
+          echo "Force-updating major floating tag ${MAJOR_TAG} -> ${COMMIT_SHA}"
           git push origin --force "refs/tags/${MAJOR_TAG}"
 
-      - name: Create GitHub Release (optional, friendly metadata)
+      - name: Create GitHub Release (optional)
         if: always()
         uses: softprops/action-gh-release@v1
         with:
