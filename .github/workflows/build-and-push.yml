@@ -25,7 +25,7 @@ jobs:
   manual-release:
     runs-on: aexp-ubuntu-latest-medium
     steps:
-      - name: Checkout (full history)
+      - name: Checkout Repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -56,7 +56,7 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "major=${MAJOR}" >> "$GITHUB_OUTPUT"
 
-      - name: Set up JDK (Maven build)
+      - name: Set up JDK
         uses: amex-eng/setup-java@v4.2.2
         with:
           distribution: 'zulu'
@@ -64,13 +64,13 @@ jobs:
           cache: 'maven'
 
       - name: Setup Maven
-        uses: amex-eng/setup-maven@<REDACTED>
+        uses: amex-eng/setup-maven@ae4bb8b0c9f98e490c38e1c17d9e63c9acab5705
         with:
           maven-version: 3.9.6
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
 
-      - name: Build fat JAR
+      - name: Build uber JAR
         run: mvn -B clean package -DskipTests
 
       - name: Prepare image variables
