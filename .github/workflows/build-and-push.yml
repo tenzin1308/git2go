@@ -30,25 +30,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Determine version (from input or pom.xml)
+      - name: Determine version (from input or mvn)
         id: version
         run: |
           set -euo pipefail
+
+          # If a version input was provided at dispatch, use it
           if [ -n "${{ github.event.inputs.version }}" ]; then
             VERSION="${{ github.event.inputs.version }}"
             echo "Using user-provided version: ${VERSION}"
           else
-            # Extract version from pom.xml; adapt XPath if your pom uses parent properties
-            VERSION=$(xmllint --xpath "/*[local-name()='project']/*[local-name()='version']/text()" pom.xml 2>/dev/null || true)
+            echo "No version input provided — resolving with Maven..."
+            # Use Maven to print the effective project.version
+            VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive org.codehaus.mojo:exec-maven-plugin:3.0.0:exec 2>/dev/null || true)
+            # Fallback to help:evaluate if above fails
             if [ -z "${VERSION}" ]; then
-              # fallback: try reading from parent/project/version or from properties if needed
-              VERSION=$(xmllint --xpath "/*[local-name()='project']/*[local-name()='parent']/*[local-name()='version']/text()" pom.xml 2>/dev/null || true)
+              VERSION=$(mvn -q -Dexpression=project.version -DforceStdout help:evaluate 2>/dev/null || true)
             fi
+
             if [ -z "${VERSION}" ]; then
-              echo "::error::Could not extract version from pom.xml; please provide 'version' input."
+              echo "::error::Could not extract version via Maven. Provide 'version' input when dispatching."
               exit 1
             fi
-            echo "Extracted version from pom.xml: ${VERSION}"
+            echo "Resolved version from Maven: ${VERSION}"
           fi
 
           # normalize and compute MAJOR tag (v<major>)
