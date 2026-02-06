@@ -143,14 +143,15 @@ jobs:
           COMMIT_SHA=$(git rev-parse --verify HEAD)
           echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
 
-      - name: Create safe annotated tags and decide push strategy (allow overwrite if placeholder requested)
+      - name: Create safe annotated tags and decide push strategy (fixed)
         id: create_safe_tags
         run: |
           set -euo pipefail
+
           VERSION="${{ steps.version.outputs.version }}"
           MAJOR="${{ steps.version.outputs.major }}"
           COMMIT_SHA="${{ steps.commit_local.outputs.commit_sha }}"
-          OVERWRITE_PLACEHOLDER="${{ github.event.inputs.overwrite_placeholder }}"
+          OVERWRITE_PLACEHOLDER="${{ github.event.inputs.overwrite_placeholder || 'false' }}"
 
           TAG_NAME="v${VERSION}"
           MAJOR_TAG="${MAJOR}"
@@ -162,23 +163,38 @@ jobs:
           echo "Major floating tag: ${MAJOR_TAG}"
           echo "Overwrite placeholder allowed: ${OVERWRITE_PLACEHOLDER}"
 
-          # Create or update local tags to point at our commit (local only)
+          # Ensure local tags point to our commit (local-only)
           git tag -f "${TAG_NAME}" "${COMMIT_SHA}" || true
           git tag -f "${MAJOR_TAG}" "${COMMIT_SHA}" || true
 
           # Does remote exact tag exist?
           if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null 2>&1; then
             echo "Remote tag ${TAG_NAME} exists — fetching into temporary ref ${REMOTE_TMP_REF}"
+            # Fetch remote tag into a temporary local ref
             git fetch origin "refs/tags/${TAG_NAME}:${REMOTE_TMP_REF}" || true
+
+            # Now try to peel the ref to a commit (handles annotated tags)
+            REMOTE_COMMIT=""
             if git show-ref --verify --quiet "${REMOTE_TMP_REF}"; then
-              REMOTE_COMMIT=$(git rev-parse "${REMOTE_TMP_REF}^{ }")
-              echo "Remote tag ${TAG_NAME} points to commit ${REMOTE_COMMIT}"
+              # Try to peel annotated tag: <ref>^{}
+              if REMOTE_COMMIT=$(git rev-parse --verify "${REMOTE_TMP_REF}^{}" 2>/dev/null || true); then
+                echo "Remote annotated tag peeled to commit: ${REMOTE_COMMIT}"
+              else
+                # fallback: the ref might be a lightweight tag pointing directly to a commit
+                if REMOTE_COMMIT=$(git rev-parse --verify "${REMOTE_TMP_REF}" 2>/dev/null || true); then
+                  echo "Remote tag resolved to commit (lightweight): ${REMOTE_COMMIT}"
+                else
+                  echo "Could not resolve remote tag commit for ${TAG_NAME}"
+                  REMOTE_COMMIT=""
+                fi
+              fi
             else
+              echo "Temporary remote ref ${REMOTE_TMP_REF} not found after fetch."
               REMOTE_COMMIT=""
             fi
           else
-            REMOTE_COMMIT=""
             echo "Remote tag ${TAG_NAME} does not exist."
+            REMOTE_COMMIT=""
           fi
 
           # Compare / decide
@@ -191,7 +207,7 @@ jobs:
               PUSH_EXACT="false"
             else
               if [ "${OVERWRITE_PLACEHOLDER}" = "true" ]; then
-                # inspect remote action.yml for placeholders
+                # inspect remote action.yml for placeholders (if present)
                 if git ls-tree -r --name-only "${REMOTE_COMMIT}" | grep -q "^action.yml$"; then
                   REMOTE_ACTION=$(git show "${REMOTE_COMMIT}:action.yml" || true)
                 else
@@ -219,9 +235,10 @@ jobs:
           echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
           echo "major_tag=${MAJOR_TAG}" >> "$GITHUB_OUTPUT"
 
-          # Cleanup temp ref if present
+          # Cleanup temp ref if created
           if git show-ref --verify --quiet "${REMOTE_TMP_REF}"; then
             git update-ref -d "${REMOTE_TMP_REF}" || true
+            echo "Cleaned up temporary remote ref ${REMOTE_TMP_REF}"
           fi
 
       - name: Push exact tag (if new/allowed) and update major tag (tags only)
