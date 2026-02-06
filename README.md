@@ -1,84 +1,226 @@
-# Git2Go
+# Git2Go GitHub Action
 
-Welcome to the Git2Go, a collection of reusable actions designed to streamline your development workflow. This
-repository houses multiple GitHub Actions under one umbrella, making it easy to manage and implement essential tasks for
-your projects.
+This repository implements a **single GitHub Action** that can run **multiple sub-actions** (plugins) using one
+entrypoint.
+Users select **which sub-action to run** via `action_name` and pass a **typed YAML configuration** via `config`.
+The action runs as a **Docker action**, executing a **Java fat (uber) JAR**.
 
-## Available Actions
+---
 
-### 1. Checkstyle Action
+## How it works (end-to-end)
 
-The Checkstyle Action runs static code analysis on Java files in your repository
-using [Checkstyle](https://checkstyle.sourceforge.io/). It checks for coding standard violations and comments inline on
-the lines where violations occur.
+1. GitHub Actions launches the Docker container
+2. GitHub injects:<br>- `with:` inputs as `INPUT_*` env vars
+   <br>- all `GITHUB_*` env vars
+   <br>- any secrets / env vars defined in the workflow
+3. The Java entrypoint (`Git2Go`) runs:<br>- loads platform config into `App`
+   <br>- selects the requested sub-action
+   <br>- parses and validates the action config
+   <br>- executes the action
 
-**Inputs:**
+---
 
-- `config_file` (optional): URL or path to a custom Checkstyle configuration file (default: Google Checkstyle).
-- `commit_sha`: The commit SHA to analyze (inferred from the PR).
+## Inputs
 
-[//]: # (Link to another readme file for checkstyle action)
+This action has **exactly two inputs**.
 
-[Checkstyle Action](docs/checkstyle/README.md)
+```yaml
+inputs:
+  action_name:
+    required: true
+  config:
+    required: true
+```
 
-### 2. Maven CLI Action
+| **Input**   | **Required** | **Description**           |
+|-------------|--------------|---------------------------|
+| action_name | yes          | Which sub-action to run   |
+| config      | yes          | Inline YAML configuration |
 
-The Maven CLI Action allows you to run Maven commands directly from your workflow. It supports various Maven goals.
+---
 
-**Inputs:**
+## Basic Usage
 
-- `maven_command`: The Maven command to execute (e.g., `clean install`).
+```yaml
+- uses: amex-eng/git2go@v1
+  with:
+    action_name: publish-artifact
+    config: |
+      artifactory_url: 
+      artifactory_path:
+      path:
+  env:
+    BUILD_PROFILE: prod
+```
 
-### 3. Purge Stale Branch Action
+---
 
-This action identifies and deletes stale branches in your repository that have not had recent activity.
+## Configuration model
 
-**Inputs:**
+There are **two kinds of configuration**.
 
-- `days`: The number of days of inactivity to consider a branch stale (default: 30).
+---
 
-### 4. Purge Stale PRs Action
+### 1. Platform configuration (global)
 
-This action automatically closes pull requests that have not seen any activity for a specified period.
+Platform configuration is merged into a global singleton called App.
 
-**Inputs:**
+#### Precedence (lowest → highest)
 
-- `days`: The number of days of inactivity to consider a PR stale (default: 30).
+Environment variables <br>
+↓<br>
+Config.properties<br>
+↓<br>
+Platform: block in YAML<br>
+↓<br>
+action config fields<br>
 
-## Upcoming Actions
+After merging, values are accessed in Java as:
 
-### 5. Sync Branch Action
+```java
+String githubUrl = App.instance().getProperty("github.server.url");
+```
 
-This action will synchronize a specified branch with its upstream counterpart, ensuring that it is up to date with the
-latest changes.
+---
 
-### 6. Assign Reviewers Action
+#### Environment variable normalization
 
-Automatically assigns reviewers to pull requests based on predefined criteria.
+All environment variable are imported automatically.
 
-### 7. Merge Check Action
+#### Rule:
 
-Checks various conditions (such as build success and code style compliance) before allowing a pull request to be merged.
+ENV_NAME → eng.name
 
-### 8. Deployments Action
+#### Examples:
 
-Handles deployments for your applications, ensuring that the necessary conditions are met before deployment is executed.
+| **Env var**       | **App key**       |
+|-------------------|-------------------|
+| GITHUB_SERVER_URL | github.server.url |
+| GITHUB_REPOSITORY | github.repository |
+| GITHUB_WORKSPACE  | github.workspace  |
+| ARTIFACTORY_TOKEN | artifactory.token |
+| FEATURE_X_ENABLED | feature.x.enabled |
 
-## Usage
+---
 
-To use any of these actions in your workflow, reference the action in your workflow YAML file like so:
+### Passing secret environment variables
+
+```yaml
+- uses: amex-eng/git2go@v1
+  with:
+    action_name: publish-artifact
+    config: |
+      artifactory_url: 
+      artifactory_path:
+      path:
+  env:
+    ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+    ARTIFACTORY_PASS: ${{ secrets.ARTIFACTORY_PASS }}
+```
+
+```java
+String artifactoryUser = App.instance().getProperty("artifactory.user");
+```
+
+### Passing non-secret environment variables
+
+```yaml
+- uses: amex-eng/git2go@v1
+  with:
+    action_name: publish-artifact
+    config: |
+      artifactory_url: 
+      artifactory_path:
+      path:
+  env:
+    BUILD_PROFILE: prod
+```
+
+```java
+String profile = App.instance().getProperty("build.profile");
+```
+
+### Using the platform block (global overrides)
+
+This option `platform:` block allows users to override **platform-level-defaults** for a single run.
+
+```yaml
+- uses: amex-eng/git2go@v1
+  with:
+    action_name: publish-artifact
+    config: |
+      platform:
+        github_server_url: <CHANGE THE URL>
+      artifactory_url: 
+      artifactory_path:
+      path:
+  env:
+    BUILD_PROFILE: prod
+```
+
+---
+
+## Using outputs from previous steps
+
+GitHub resolves `${{ ... }}` before the container runs.
 
 ```yaml
 jobs:
-  example_job:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      
-      - name: Run Checkstyle
-        uses: amex-eng/git2go@v1.0.0 # Refer to the desired version
+      - id: version
+        run: |
+          echo "verison=1.2.3" >> $GITHUB_OUTPUT
+      - uses: amex-eng/git2go@v1
         with:
-          action_name: 'checkstyle'
-          config_file: 'https://example.com/checkstyle.xml'
-          commit_sha: ${{ github.sha }}
+          action_name: maven-cli
+          config: |
+            command: "mvn -Dapp.version=${{ steps.version.outputs.version }} test"
+```
+
+---
+
+## Adding a new sub-action
+
+### Config class
+
+```java
+public final class MyActionConfig {
+
+  @NotBlank
+  public String foo;
+
+}
+```
+
+### Action class
+
+```java
+public final class MyAction implements Action<MyActionConfig> {
+
+  public String name() {
+    return "my-action";
+  }
+
+  public Class<MyActionConfig> configClass() {
+    return MyACtionConfig.class;
+  }
+
+  public void execute(MyActionConfig cfg) {
+    // implementation
+  }
+
+}
+```
+
+### Register action
+
+```bash
+  src/main/resources/META-INF/services/com.aexp.acq.go2.core.Action
+```
+
+```text
+com.aexp.acq.go2.github_actions.MyAction
+```
+
