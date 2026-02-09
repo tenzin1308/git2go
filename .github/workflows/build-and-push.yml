@@ -24,6 +24,7 @@ permissions:
 jobs:
   manual-release:
     runs-on: aexp-ubuntu-latest-medium
+    environment: Release
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -74,6 +75,7 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "major=${MAJOR}" >> "$GITHUB_OUTPUT"
 
+
       - name: Build uber JAR
         run: mvn -B clean package -DskipTests
 
@@ -94,6 +96,7 @@ jobs:
           echo "image_latest=${IMAGE_LATEST}" >> "$GITHUB_OUTPUT"
           echo "registry=${REGISTRY}" >> "$GITHUB_OUTPUT"
 
+
       - name: Optionally build & push Docker images
         if: ${{ github.event.inputs.push_images == 'true' }}
         run: |
@@ -111,6 +114,7 @@ jobs:
           docker push "${{ steps.imgvars.outputs.image_major }}:${{ steps.version.outputs.version }}"
           docker push "${{ steps.imgvars.outputs.image_major }}:latest"
 
+
       - name: Replace placeholders in action.yml
         run: |
           set -euo pipefail
@@ -125,6 +129,7 @@ jobs:
           sed -i "s|__TAG__|${VERSION}|g" action.yml
 
           echo "Updated action.yml to: ${REGISTRY}/${{ github.repository }}/${MAJOR}:${VERSION}"
+
 
       - name: Create a local commit (tags-only)
         id: commit_local
@@ -142,6 +147,7 @@ jobs:
 
           COMMIT_SHA=$(git rev-parse --verify HEAD)
           echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
+
 
       - name: Create safe annotated tags and decide push strategy (fixed)
         id: create_safe_tags
@@ -241,6 +247,7 @@ jobs:
             echo "Cleaned up temporary remote ref ${REMOTE_TMP_REF}"
           fi
 
+
       - name: Push exact tag (if new/allowed) and update major tag (tags only)
         run: |
           set -euo pipefail
@@ -263,6 +270,7 @@ jobs:
           # Force update major tag to point at the release commit (intentional floating pointer)
           echo "Force-updating major floating tag ${MAJOR_TAG} -> ${COMMIT_SHA}"
           git push origin --force "refs/tags/${MAJOR_TAG}"
+
 
       - name: Create GitHub Release (optional)
         if: always()
