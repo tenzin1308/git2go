@@ -139,6 +139,19 @@ ENV_NAME → env.name
 
 ---
 
+## GitHub-provided environment variables
+
+GitHub automatically injects a set of standard environment variables into every workflow run
+(e.g. `GITHUB_REPOSITORY`, `GITHUB_SHA`, `GITHUB_REF`, `GITHUB_WORKSPACE`).
+
+Git2Go automatically imports all environment variables and normalizes them into the platform
+configuration model (see [Environment variable normalization](#environment-variable-normalization)).
+
+For the complete and up-to-date list of GitHub-provided variables, refer to the official documentation:
+https://docs.github.com/en/actions/reference/workflows-and-actions/variables
+ 
+---
+
 ### Passing secret environment variables
 
 ```yaml
@@ -219,7 +232,14 @@ jobs:
 
 ## Adding a new sub-action
 
+A sub-action is a pluggable unit of functionality that can be selected at runtime using the
+`action_name` input. Each sub-action consists of a configuration model, an action implementation,
+and a registration entry so it can be discovered at runtime.
+
 ### Config class
+
+Defines the **typed configuration model** for the sub-action.
+This class is populated from the `config` YAML input and validated before execution.
 
 ```java
 public final class MyActionConfig {
@@ -231,6 +251,10 @@ public final class MyActionConfig {
 ```
 
 ### Action class
+
+Implements the sub-action logic.
+The `name()` must match the value passed to `action_name` in the workflow.
+The `execute` method is invoked after configuration parsing and validation succeeds.
 
 ```java
 public final class MyAction implements Action<MyActionConfig> {
@@ -252,9 +276,19 @@ public final class MyAction implements Action<MyActionConfig> {
 
 ### Register action
 
-```bash
-  src/main/resources/META-INF/services/com.aexp.acq.go2.core.Action
+Registers the sub-action using Java’s `ServiceLoader` mechanism so it can be
+discovered automatically at runtime without manual wiring.
+
+Add the fully qualified action class name to the following file
+(**append it — do not replace existing entries**):
+
+**File:**
+
+```text
+src/main/resources/META-INF/services/com.aexp.acq.go2.core.Action
 ```
+
+**Content to add:**
 
 ```text
 com.aexp.acq.go2.github_actions.MyAction
