@@ -7,6 +7,23 @@ The action runs as a **Docker action**, executing a **Java fat (uber) JAR**.
 
 ---
 
+## Table of Contents
+
+- [How it works (end-to-end)](#how-it-works-end-to-end)
+- [Inputs](#inputs)
+- [Basic Usage](#basic-usage)
+- [Available & Upcoming Actions](#available--upcoming-actions)
+- [Configuration model](#configuration-model)
+    - [Platform configuration (global)](#1-platform-configuration-global)
+    - [Environment variable normalization](#environment-variable-normalization)
+    - [Passing secret environment variables](#passing-secret-environment-variables)
+    - [Passing non-secret environment variables](#passing-non-secret-environment-variables)
+    - [Using the platform block (global overrides)](#using-the-platform-block-global-overrides)
+- [Using outputs from previous steps](#using-outputs-from-previous-steps)
+- [Adding a new sub-action](#adding-a-new-sub-action)
+
+---
+
 ## How it works (end-to-end)
 
 1. GitHub Actions launches the Docker container
@@ -52,6 +69,25 @@ inputs:
   env:
     BUILD_PROFILE: prod
 ```
+
+---
+
+## Available & Upcoming Actions
+
+Use the value in the **Action Name** column as the `action_name` input in your workflow.
+Actions marked as **Coming Soon** are planned and not yet available in the current release.
+
+| **Action Name**      | **Description**                                       | **Docs**           |
+|----------------------|-------------------------------------------------------|--------------------|
+| `github-artifact`    | Upload and download GitHub Actions artifacts          | _Coming Soon_      |
+| `github-release`     | Create Git tags and GitHub releases                   | _Coming Soon_      |
+| `artifact-publisher` | Publish build artifacts to Artifactory                | _Coming Soon_      |
+| `docker-publisher`   | Build and publish Docker images to a registry         | _Coming Soon_      |
+| `close-stale`        | Automatically close stale PRs and Branches            | _Coming Soon_      |
+| `maven-cli`          | Run arbitrary Maven commands                          | [View](#maven-cli) |
+| `assign-reviewers`   | Automatically assign reviewers to pull requests       | _Coming Soon_      |
+| `sync-branch`        | Sync a branch with its upstream or parent branch      | _Coming Soon_      |
+| `run-checkstyle`     | Run Checkstyle and report violations on Java projects | _Coming Soon_      |
 
 ---
 
