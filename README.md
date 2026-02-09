@@ -207,7 +207,7 @@ jobs:
     steps:
       - id: version
         run: |
-          echo "verison=1.2.3" >> $GITHUB_OUTPUT
+          echo "version=1.2.3" >> $GITHUB_OUTPUT
       - uses: amex-eng/git2go@v1
         with:
           action_name: maven-cli
