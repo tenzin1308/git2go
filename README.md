@@ -21,6 +21,7 @@ The action runs as a **Docker action**, executing a **Java fat (uber) JAR**.
     - [Using the platform block (global overrides)](#using-the-platform-block-global-overrides)
 - [Using outputs from previous steps](#using-outputs-from-previous-steps)
 - [Adding a new sub-action](#adding-a-new-sub-action)
+- [Contributing](#contributing)
 
 ---
 
@@ -293,4 +294,17 @@ src/main/resources/META-INF/services/com.aexp.acq.go2.core.Action
 ```text
 com.aexp.acq.go2.github_actions.MyAction
 ```
+
+## Contributing
+
+Contributions are welcome, primarily in the form of new sub-actions or improvements to existing ones.
+
+If you’d like to contribute:
+
+- Open an issue to discuss the use case before starting significant work
+- Follow the patterns described in [Adding a new sub-action](#adding-a-new-sub-action)
+- Ensure changes are backward-compatible and do not break existing actions
+
+Release-related logic (tagging, publishing, immutability rules) is tightly controlled.
+If your change impacts releases, discuss it with the maintainers first.
 
