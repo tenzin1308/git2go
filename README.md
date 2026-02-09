@@ -61,7 +61,7 @@ inputs:
 ```yaml
 - uses: amex-eng/git2go@v1
   with:
-    action_name: publish-artifact
+    action_name: artifact-publisher
     config: |
       artifactory_url: 
       artifactory_path:
@@ -125,7 +125,7 @@ All environment variable are imported automatically.
 
 #### Rule:
 
-ENV_NAME → eng.name
+ENV_NAME → env.name
 
 #### Examples:
 
@@ -144,7 +144,7 @@ ENV_NAME → eng.name
 ```yaml
 - uses: amex-eng/git2go@v1
   with:
-    action_name: publish-artifact
+    action_name: artifact-publisher
     config: |
       artifactory_url: 
       artifactory_path:
@@ -163,7 +163,7 @@ String artifactoryUser = App.instance().getProperty("artifactory.user");
 ```yaml
 - uses: amex-eng/git2go@v1
   with:
-    action_name: publish-artifact
+    action_name: artifact-publisher
     config: |
       artifactory_url: 
       artifactory_path:
@@ -183,7 +183,7 @@ This option `platform:` block allows users to override **platform-level-defaults
 ```yaml
 - uses: amex-eng/git2go@v1
   with:
-    action_name: publish-artifact
+    action_name: artifact-publisher
     config: |
       platform:
         github_server_url: <CHANGE THE URL>
